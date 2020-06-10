@@ -500,6 +500,7 @@ typedef struct _NDIS_802_11_STATISTICS
 #define CGI_GET_WLN_11B_CHN_LIST() 				CGI_get_wlan_11b_channel_list(req)
 #define CGI_GET_WLN_11G_CHN_LIST() 				CGI_get_wlan_11g_channel_list(req)
 #define CGI_WLN_Channel()							CGI_get_wlan_channel(req)
+#define CGI_SYSTEM_LANG()							CGI_get_system_lang(req)
 #define CGI_GET_WLN_WSC_CONFIG_STATE() 			CGI_get_wlan_wsc_config_state(req)
 #define CGI_GET_WLN_SSID_NUM()					CGI_get_wlan_ssid_num(req)
 #define CGI_GET_WLN_WDS_PHY_MODE()				CGI_get_wlan_wds_phy_mode(req)
@@ -680,6 +681,7 @@ extern void CGI_get_wlan_11a_channel_list(http_req *req);
 extern void CGI_get_wlan_11b_channel_list(http_req *req);
 extern void CGI_get_wlan_11g_channel_list(http_req *req);
 extern void CGI_get_wlan_channel(http_req *req);
+extern void CGI_get_system_lang(http_req *req);
 extern void CGI_get_wlan_wsc_config_state(http_req *req);
 extern void CGI_get_wlan_ssid_num(http_req *req);
 extern void CGI_get_wlan_wds_phy_mode(http_req *req);

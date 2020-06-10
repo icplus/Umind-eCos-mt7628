@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>WiFi-Repeater Web Server</title>
 <script type="text/javascript" src="js/lang_conf.js"></script>
-<script type="text/javascript" src="js/lang_en.js"></script>
+<script type="text/javascript" src="js/lang_<% CGI_SYSTEM_LANG(); %>.js"></script>
 <meta http-equiv="pragma" content="no-cache">
 <meta http-equiv="cache-control" content="no-cache">
 <meta http-equiv="expires" content="0">
@@ -63,7 +63,7 @@ body {
 }
 </style>
 <script type="text/javascript">
-var user_lang= "<% CGI_CFG_GET(CFG_SYS_Language); %>";
+var user_lang = "<% CGI_CFG_GET(CFG_SYS_Language); %>";
 var settp = '0'*1;
 
 var Base64 = {

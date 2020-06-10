@@ -640,7 +640,7 @@ void CGI_do_update_mac(http_req *req)
 // 8
 int CGI_do_sys_config(http_req *req)
 {
-   char *CCMD, *file,*ping;
+   char *CCMD, *file,*ping, *lang_select1;
    int len,rc, dst;
    int rtt, i;	
    int loop = 5;
@@ -714,6 +714,10 @@ int CGI_do_sys_config(http_req *req)
 		netif_clear_cnt(WAN_NAME);
 		netif_clear_cnt(LAN_NAME);
 		return 0;
+	case '7':
+		lang_select1 = WEB_query(req,"lang_select");
+		diag_printf("lang_select %s\n",lang_select1);
+		CFG_set_str( CFG_SYS_Language, lang_select1);
 		
 	default:
 		break;
@@ -1613,7 +1617,7 @@ char *cgiFunc(webpage_entry* fileptr, http_req *req)
 	if (cmd) {
 		result = CGI_do_cmd(req);
 		if ((result == CGI_RC_REBOOT) || (result == CGI_RC_UPGRADE))
-			return "count.html";
+			return "setok.htm";
 		else if (result > 0)
 			return 0;// WEB_query(req,"GO");
 	}
@@ -3244,6 +3248,28 @@ void CGI_get_wlan_channel(http_req *req)
 	}
 
 	return;
+}
+
+void CGI_get_system_lang(http_req *req)
+{
+    char val[255];
+
+    val[0] = '\0';
+
+    CFG_get_str(CFG_SYS_Language, val);
+
+    if (atoi(val) == 0)
+        WEB_printf(req, "%s", "en");
+    else if (atoi(val) == 1)
+        WEB_printf(req, "%s", "zhcn");
+    else if (atoi(val) == 2)
+        WEB_printf(req, "%s", "fran");
+	else if (atoi(val) == 3)
+        WEB_printf(req, "%s", "span");
+	else if (atoi(val) == 4)
+        WEB_printf(req, "%s", "port");
+
+    return;
 }
 
 void CGI_get_wlan_wds_default_key(http_req *req)
