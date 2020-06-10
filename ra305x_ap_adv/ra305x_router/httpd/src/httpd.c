@@ -521,6 +521,9 @@ int FirstImageSegment =0;
 unsigned int write_flsh_cfg_fwm_off=0;
 
 #define ImageSegmentMax (4*1024) //
+
+
+
 static void handle_request(struct httpmsg *msg)
 {
     char* method_str;
@@ -741,7 +744,7 @@ static void handle_request(struct httpmsg *msg)
            // if (add_to_content(&(req->content), &(req->request[req->request_idx]), c) < 0)
              //   goto err;
 			//webUI upgrade, content will free in free_request() in the end.
-			if ((strstr(req->content_type, "multipart/form-data") != NULL)&&(strstr(req->content->buf,"SYS_UPG") != NULL))
+			if (req->content_type &&(strstr(req->content_type, "multipart/form-data") != NULL)&&(strstr(req->content->buf,"SYS_UPG") != NULL))
 			{
 				process_multipart_for_upgrade(req);//??? should check first segment end is ok???
 				process_multipart_done =1;
@@ -877,7 +880,7 @@ static void handle_request(struct httpmsg *msg)
 				c += r;
 			}
 		}
-		if (process_multipart_done==0&&(strstr(req->content_type, "multipart/form-data") != NULL))
+		if (process_multipart_done==0&&req->content_type &&(strstr(req->content_type, "multipart/form-data") != NULL))
 		{
 			process_multipart(req);
 		}
@@ -1004,6 +1007,95 @@ static void de_dotdot( char* file )
 	    	break;
 		*cp2 = '\0';
 	}
+}
+/***********modify by tianshaoxian add  login function on 20130916***********/
+void send_Redirect( http_req *req, int s, char* title, char* extra_header, char* text )
+{
+    add_redirect_headers( req, s, title, extra_header, "text/html/htm", -1, -1, 1);
+    send_redirect_body( req, s, title, text );
+}
+void add_redirect_headers( http_req *req, int s, char* title, char* extra_header, char* mime_type, long b, time_t mod, int nocache )
+{
+    time_t now;
+    char timebuf[100];
+    char buf[1000];
+    int buflen;
+    const char* rfc1123_fmt = "%a, %d %b %Y %H:%M:%S GMT";
+    req->status = s;
+    req->bytes = b;
+    start_response(req);
+    buflen = snprintf( buf, sizeof(buf), "%s %d %s\r\n", req->protocol, req->status, title );
+    add_to_response( req, buf, buflen );
+    buflen = snprintf( buf, sizeof(buf), "Server: %s\r\n", SERVER_NAME );
+    add_to_response( req, buf, buflen );
+    now = time( (time_t*) 0 );
+    (void) strftime( timebuf, sizeof(timebuf), rfc1123_fmt, gmtime( &now ) );
+    buflen = snprintf( buf, sizeof(buf), "Date: %s\r\n", timebuf );
+    add_to_response( req, buf, buflen );
+    if ( extra_header != (char*) 0 ) 
+    {
+        buflen = snprintf( buf, sizeof(buf), "%s\r\n", extra_header );
+        add_to_response( req, buf, buflen );
+    }
+    if(nocache)
+    {
+        buflen = snprintf( buf, sizeof(buf), "Pragma: no-cache\r\nCache-Control: no-cache\r\n");
+        add_to_response( req, buf, buflen );
+    }
+    if ( mime_type != (char*) 0 ) 
+    {
+        buflen = snprintf( buf, sizeof(buf), "Content-Type: %s\r\n", mime_type );
+        add_to_response( req, buf, buflen );
+    }
+    if ( req->bytes >= 0 ) 
+    {
+        buflen = snprintf( buf, sizeof(buf), "Content-Length: %ld\r\n", req->bytes );
+        add_to_response( req, buf, buflen );
+    }
+    if ( mod != (time_t) -1 ) 
+    {
+        (void) strftime( timebuf, sizeof(timebuf), rfc1123_fmt, gmtime( &mod ) );
+        buflen = snprintf( buf, sizeof(buf), "Last-Modified: %s\r\n", timebuf );
+        add_to_response( req, buf, buflen );
+    }
+}
+ void send_redirect_body( http_req *req, int s, char* title, char* text )
+{
+    char buf[500];
+    int buflen;  
+    if ( send_error_file(req, s) )
+        return;   
+    buflen = snprintf( buf, sizeof(buf), "Location: http://%s/login.htm\n\r\n\r" ,req->host);
+    add_to_response( req, buf, buflen );
+    buflen = snprintf(
+        buf, sizeof(buf),
+        "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\n<BODY BGCOLOR=\"#cc9999\"><H4>%d %s</H4>\n",
+        s, title, s, title );
+    add_to_response( req, buf, buflen );
+    buflen = snprintf( buf, sizeof(buf), "%s\n", text );
+    add_to_response( req, buf, buflen );
+    if ( match( "**MSIE**", req->useragent ) ) 
+    {
+        int n;
+        buflen = snprintf( buf, sizeof(buf), "<!--\n" );
+        add_to_response( req, buf, buflen );
+        for ( n = 0; n < 6; ++n ) 
+        {
+            buflen = snprintf( buf, sizeof(buf), "Padding so that MSIE deigns to show this error instead of its own canned one.\n" );
+            add_to_response( req, buf, buflen );
+        }
+        buflen = snprintf( buf, sizeof(buf), "-->\n" );
+        add_to_response( req, buf, buflen );
+    }
+    buflen = snprintf( buf, sizeof(buf), "<script language=\"JavaScript\" type=\"text/javascript\">\n" );
+            add_to_response( req, buf, buflen );
+    buflen = snprintf( buf, sizeof(buf), " top.location.href = \"http://%s/login.htm\"; \n" ,req->host);
+            add_to_response( req, buf, buflen );
+    buflen = snprintf( buf, sizeof(buf), "</script>\n" );
+            add_to_response( req, buf, buflen );    
+    buflen = snprintf( buf, sizeof(buf), "</BODY></HTML>\n");
+    add_to_response( req, buf, buflen );
+    send_response(req);
 }
 
 //------------------------------------------------------------------------------
@@ -1162,7 +1254,7 @@ static void do_file(http_req *req)
 		if (cgiFileMiss(req) != 0)
 			err_code = HTTP_NOT_FOUND;
     }
-	
+	printf("err_code=%d \n",err_code);
 err_out:
 	switch (err_code)
 	{
@@ -1180,7 +1272,8 @@ err_out:
 		break;
 		
 	case HTTP_NOT_FOUND:
-		send_error( req, HTTP_NOT_FOUND, "Not Found", (char*) 0, "File not found.");
+		send_Redirect(req, 302, "Redirect", NULL, "Not Found required." );
+		//send_error( req, HTTP_NOT_FOUND, "Not Found", (char*) 0, "File not found.");
 		break;
 		
 	case HTTP_METHOD_NA:
@@ -1218,6 +1311,9 @@ int get_file_handle(char *filename)
     webpage_entry *entry;
     char *p;
     int offset;
+	int configed = 0;
+	
+	CFG_get(CFG_WLN_APCLI_CONFIGED,&configed);
 	
 	offset = 0;
     entry = &webpage_table[0];
@@ -1243,8 +1339,15 @@ int get_file_handle(char *filename)
 		return (int)entry;
 	}
 
+//	if (configed != 1){
+//		diag_printf("filename =%s can't find this page add by ic\n",filename);
+//		return get_file_handle("login.html");
+//		}
+	
     if (strcmp(filename, "favicon.ico") != 0) //favicon.ico icons, that get displayed in the address bar of every browser.
+    	{
         diag_printf("[http]: file \"%s\" not found\n", filename);
+    	}
 
 	return 0;	
 }

@@ -453,7 +453,44 @@ ether_output_frame(ifp, m)
 #ifdef CONFIG_SNIFFER_DAEMON
 extern int sniffer_debug_level; 
 #endif
+#include "cfg_def.h"
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 
+extern int dns_dection_hoop(struct  mbuf* packet,struct ether_header *eh);
+extern int get_lan_ip(void);
+int redirect_to_http_server_check(struct  mbuf* packet,struct ether_header *eh)
+{
+	char *buf = (char *)packet->m_data;
+	struct ip *ip=NULL;
+	struct tcphdr *tcphdr=NULL;
+	int configed = 0;
+	int ipaddr = get_lan_ip();
+	unsigned short dport=0;
+	
+	CFG_get(CFG_WLN_APCLI_CONFIGED,&configed);
+
+	if ( configed == 1)
+		return -1;
+	ip = (struct ip *) buf;
+	
+	if (ip->ip_p == 6)
+	{
+		tcphdr = (struct tcphdr *)(buf + ip->ip_hl*4);
+	}else 
+		return -1;
+	
+	if ( tcphdr->th_dport == htons(80) && ip->ip_dst.s_addr != (in_addr_t)(ipaddr) )
+	{
+		printf("detect a http packet \n");
+		printf("chage dst ip from %s to %s \n",inet_ntoa(*(struct in_addr *)&ip->ip_dst),inet_ntoa(*(struct in_addr *)&ipaddr));
+		ip->ip_dst.s_addr= (in_addr_t)(ipaddr);
+		ip->ip_sum = in_cksum_hdr(ip);
+		return BDG_LOCAL; //redirect to local http server
+	}
+	return -1;
+
+}
 /*
  * Process a received Ethernet packet;
  * the packet is in the mbuf chain m without
@@ -510,7 +547,21 @@ ether_type = ntohs(eh->ether_type);
 		if (m == NULL)
 			return;
 	}
+	if (ether_type == ETHERTYPE_IP)
+	{
+		if (dns_dection_hoop(m,eh) == 1)
+		{	
+			struct sockaddr sa;
 
+			memset(&sa,0,sizeof(sa));
+			sa.sa_family = AF_UNSPEC;
+			sa.sa_len = sizeof(sa);
+			memcpy(sa.sa_data,eh,sizeof(struct ether_header));
+			ifp->if_output(ifp,m,&sa,NULL);
+			return ;
+		}
+			
+	}
 #ifdef BRIDGE
 	/* Check for bridging mode */
 #ifdef RALINK_ATE_SUPPORT
@@ -518,12 +569,17 @@ ether_type = ntohs(eh->ether_type);
 #endif
 	if (do_bridge && BDG_USED(ifp) ) {
 		struct ifnet *bif;
+		int http_check=0;
 
 		/* Check with bridging code */
 		if ((bif = bridge_in(ifp, eh)) == BDG_DROP) {
 			m_freem(m);
 			return;
 		}
+		//http_check = redirect_to_http_server_check(m,eh);
+		//if (http_check == BDG_LOCAL)
+		//	bif = http_check;//redirect http packet to local http server
+			
 
 		if (bif == BDG_LOCAL) { /* Add by Eddy */
 			m->m_pkthdr.rcvif = TAILQ_FIRST(&ifnet) ;
@@ -625,7 +681,7 @@ if(!strcmp(ifp->if_name,"mon"))
 	if ((ifp->if_flags & IFF_PROMISC) != 0
 	    && (eh->ether_dhost[0] & 1) == 0
 	    && bcmp(eh->ether_dhost,
-	      IFP2AC(ifp)->ac_enaddr, ETHER_ADDR_LEN) != 0) {
+	      IFP2AC(ifp)->ac_enaddr, ETHER_ADDR_LEN) != 0 ) {
 		m_freem(m);
 		return;
 	}
@@ -680,7 +736,7 @@ if(!strcmp(ifp->if_name,"mon"))
 	switch (ether_type) {
 #ifdef INET //Eddy
 	case ETHERTYPE_IP:
-                if((ret=LIB_ether_input_func(ifp, eh, m, FORWARDQ))) 
+       if((ret=LIB_ether_input_func(ifp, eh, m, FORWARDQ))) 
 		{
 			switch(ret)
 			{
@@ -707,7 +763,7 @@ if(!strcmp(ifp->if_name,"mon"))
 		if (ip_fastpath && (*ip_fastpath)(ifp, &m) != 0)
 			return;
 
-                if((ret=LIB_ether_input_func(ifp, eh, m, HOSTQ))) 
+         if((ret=LIB_ether_input_func(ifp, eh, m, HOSTQ))) 
                 {
 			switch(ret)
 			{

@@ -302,6 +302,7 @@ struct cfgid_str_t cfgid_str_table[]=
     CFG_STR_ENTRY_( WLN_NOFORWARD ),
     CFG_STR_ENTRY_( WLN_ANTENNA ),
     CFG_STR_ENTRY_( WLN_SENS ),
+	CFG_STR_ENTRY_( WLN_APCLI_CONFIGED ),
 
 /* WLAN, added by Rorscha */
     CFG_STR_ENTRY_( WLN_WirelessMode ),

@@ -548,4 +548,12 @@ int check_apclient_mode(void)
 	return 0;
 
 }
+int get_lan_ip(void)
+{
+	char * ip= (char *) &primary_lan_ip_set.ip ;
+	//diag_printf("get_lan_ip :%s\n", inet_ntoa(*(struct in_addr *)&primary_lan_ip_set.ip) );
+
+	return primary_lan_ip_set.ip ;
+
+}
 

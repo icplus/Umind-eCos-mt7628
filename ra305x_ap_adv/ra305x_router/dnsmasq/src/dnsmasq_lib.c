@@ -402,8 +402,8 @@ static int interfaceGet(int port)
 			recv_infaces[recv_infaces_num].addr = addr;
 			recv_infaces[recv_infaces_num].valid = 1;
 			recv_infaces_num++;
-                        strcpy(ipbuf , inet_ntoa (addr.in.sin_addr));
-                        diag_printf("%s(): bind socket successful on %s:%d\n", __FUNCTION__, ipbuf, ntohs(addr.in.sin_port));
+            strcpy(ipbuf , inet_ntoa (addr.in.sin_addr));
+            diag_printf("%s(): bind socket successful on %s:%d\n", __FUNCTION__, ipbuf, ntohs(addr.in.sin_port));
 		}
 
 		do
@@ -1068,4 +1068,136 @@ void dnsMasqforwarddump(void)
 	forwardListdump(1);	
 }
 
+#include <netinet/ip.h>
+#include <netinet/udp.h>
+#include <sys_status.h>
+#include <net/ethernet.h>
+#include <sys/mbuf.h>
+
+struct dns_answer {
+    u_int16_t code;
+    u_int16_t type;
+    u_int16_t class;
+    u_int32_t ttl;
+    u_int16_t data_len;
+    u_int32_t addr;
+}__attribute__ ((packed));
+
+void test_hexdump(char *buf,int len)
+{
+	int i=0;
+	for(i=0;i < len;i ++)
+	{
+		if (i %16 == 0)diag_printf("\n %p:",buf+i);
+		diag_printf("%02x  ",(unsigned char )buf[i]);
+	}
+
+}
+extern int check_apclient_mode(void);
+int dns_dection_hoop(struct  mbuf* packet,struct ether_header *eh)
+{
+	void *buf = packet->m_data;
+	struct ip *ip=NULL;
+	struct udphdr *udp=NULL;
+	DNSHEADER *dnsheader=NULL;
+	unsigned short dport=0,sport=0;
+	struct in_addr sip,dip;
+	unsigned short goodreq = 0;
+	char dnmae[256]={0};
+	unsigned short plen =0;
+	char cfg_name[256],cfg_dn[256];
+	int configed = 0;
+	
+	CFG_get(CFG_WLN_APCLI_CONFIGED,&configed);
+
+	memset(cfg_name,0,sizeof(cfg_name));
+	memset(cfg_dn,0,sizeof(cfg_dn));
+	CFG_get_str(CFG_SYS_NAME,cfg_name) ; 
+	CFG_get_str(CFG_SYS_DOMAIN,cfg_dn) ;
+
+	ip = (struct ip *) buf;
+
+	//diag_printf("p src =%p,pdst=%p\n",&ip->ip_src,&ip->ip_dst);
+	//diag_printf("<%s> ---> ",inet_ntoa(ip->ip_src));
+	//diag_printf(" <%s> \n",inet_ntoa(ip->ip_dst));
+
+	//test_hexdump(buf,48);
+	if (ip->ip_p == 0x11)
+	{
+		udp = (struct udphdr *)(buf + ip->ip_hl*4);
+		//diag_printf("get a udp packet,dport = %d sport=%d\n",ntohs(udp->uh_dport),ntohs(udp->uh_sport));
+	}
+	else{
+		return 0;
+	}
+	if (udp->uh_dport != htons(53))
+		return 0;
+	else
+	{
+		;//diag_printf("get a dns packet\n");
+	}
+
+	dnsheader= udp+1;
+	if (dnsheader->qr == 1)
+	{
+		//diag_printf("dns response packet\n");
+		return 0;
+	}
+
+	memset(dname,0,sizeof(dname));
+	plen = udp->uh_ulen - sizeof(struct udphdr);
+	goodreq = msgParserequest(dnsheader, (unsigned int)plen, dname);
+	if (strcmp(dname,cfg_dn) == 0 || configed !=1 )
+	{
+		struct dns_answer * answer= NULL;
+		char mac_addr[6];
+		unsigned int ip_len=0,udp_len=0;
+
+		ip_len = ntohs(ip->ip_len);
+		udp_len = ntohs(udp->uh_ulen);
+		//switch ip address and update ip checksum
+		dip = ip->ip_dst;
+		sip = ip->ip_src;
+		ip->ip_dst = sip;
+		ip->ip_src = dip;
+
+		//switch udp port
+		dport = udp->uh_dport;
+		sport = udp->uh_sport;
+		udp->uh_sport = dport;
+		udp->uh_dport = sport;
+		udp->uh_sum=0;
+		diag_printf("%s :dname=%s\n",__FUNCTION__,dname);
+		//update DNS connect
+		dnsheader->qr = 1;
+		dnsheader->ra = 1;
+		dnsheader->qdcount=htons(1);
+		dnsheader->ancount=htons(1);
+		answer =(struct dns_answer *)( (char *)udp + udp_len);
+		answer->code = htons(0xc00c);
+	    answer->type = htons(1);
+	    answer->class = htons(1);
+	    answer->ttl = htons(0x1);
+	    answer->data_len = htons(4);
+	    if (check_apclient_mode() == 0)
+	    	answer->addr = SYS_lan_ip;
+	    else
+	    	answer->addr = SYS_wan_ip;
+	    udp_len += sizeof(struct dns_answer);
+	    ip_len +=sizeof(struct dns_answer);
+	    diag_printf("ip_len=%d,udp_len=%d\n",ip_len,udp_len);
+	    udp->uh_ulen = htons(udp_len);
+	    ip->ip_len = htons(ip_len);
+	   	ip->ip_sum = 0;
+		ip->ip_sum = in_cksum_hdr(ip);;
+	    memcpy(mac_addr,eh->ether_dhost,6);
+	    memcpy(eh->ether_dhost,eh->ether_shost,6);
+	    memcpy(eh->ether_shost,mac_addr,6);
+	    packet->m_len +=sizeof(struct dns_answer);
+	   test_hexdump(ip,ip_len); 
+		return 1;
+	}else {
+		return 0;
+	}
+}
 
