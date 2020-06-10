@@ -1,0 +1,82 @@
+@charset "utf-8";
+/* CSS Document */
+
+
+.on {
+	display:inline;
+}
+.off {
+	display:none;
+}
+body {
+	background-color:#FFF;
+	color:#FFF;
+}
+#id_setok_bg {
+	position:absolute;
+	top:110px;
+	width:900px;
+	height:500px;
+	margin:0px auto;
+	background-color: #1F67B1;
+}
+#id_setok_head {
+	position:absolute;
+	font-size:56px;
+	top:80px;
+	left:200px;
+}
+#id_setok_info {
+	position:absolute;
+	font-size:20px;
+	top:200px;
+	left:200px;
+	text-align:left;
+}
+#id_setok_info_i {
+	position:absolute;
+	font-size:14px;
+	top:250px;
+	left:200px;
+	text-align:left;
+}
+#id_process_bg {
+	position:absolute;
+	top:320px;
+	left:200px;
+	height:25px;
+	width:400px;
+	border: 2px solid #FFF;
+	background-color:#FFF;
+}
+#id_process_ing {
+	position:relative;
+	top:0px;
+	left:0px;
+	height:25px;
+	width:0px;
+	background-color:#1F67B1;
+}
+#id_process_num{
+	position:relative;
+	top:0px;
+	left:0px;
+	height:25px;
+	width:400px;
+}
+#id_setok_foot {
+	color:#FFF;
+	width:650px;
+	position:absolute;
+	width:300px;
+	right:120px;
+	bottom:50px;
+}
+.input_btn_back {
+	height: 40px;
+	font-size:16px;
+	color:#FFF;
+	border: 3px solid #FFF;
+	width:100px;
+	background-color:#1F67B1;
+}

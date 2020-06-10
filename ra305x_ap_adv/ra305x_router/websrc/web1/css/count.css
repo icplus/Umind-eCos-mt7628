@@ -1,0 +1,79 @@
+html,body {
+    height: 100%;
+	width:100%;
+	min-width:1000px;
+	margin:0px;
+	overflow:auto;
+	font-family:微软雅黑;
+}
+.page_header{
+	background-color:#5a9ce6;
+	width:100%;
+	min-width:1000px;
+	height:140px;
+	margin:0;
+	position:relative;
+}
+h1 {
+	font-size: 40px;
+    color: #fff;
+    text-align: center;
+    height: 60px;
+    line-height: 140px;
+    font-weight: 1000;
+	margin:0;
+}
+#page_main{
+	width:100%;
+	min-width:1000px;
+	height:448px;
+	margin:0;
+}
+#wifi_logo{
+	width:320px;
+	height:400px;
+	margin-left: auto;
+	margin-right: auto;
+	text-align:center;
+}
+#wifi_logo img{
+	vertical-align:middle;
+}
+#wifi_logo span{
+	height:100%;
+	width:0;
+	overflow:hidden;
+	display:inline-block;
+	vertical-align:middle;
+}
+.btn_start{
+	width:320px;
+	height:48px;
+	background:#F00;
+	margin-left: auto;
+	margin-right: auto;
+	text-align:center;
+}
+#btn_count{
+	width:320px;
+	height:48px;
+	color:#FFF;
+    background: #428bef;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    vertical-align: baseline;
+    font-family: '微软雅黑';
+}
+
+#btn_sucess{
+	width:320px;
+	height:48px;
+	color:#FFF;
+    background: #428bef;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    vertical-align: baseline;
+    font-family: '微软雅黑';
+}

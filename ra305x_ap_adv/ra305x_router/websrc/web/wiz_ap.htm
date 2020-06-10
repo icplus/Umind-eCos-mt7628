@@ -1,0 +1,358 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WiFi-Repeater Web Server</title>
+<link rel="stylesheet" href="style/gl.css" type="text/css">
+<link rel="stylesheet" href="style/common.css" type="text/css">
+<script type="text/javascript" src="js/lang_en.js?v=1529017603"></script>
+<meta http-equiv="pragma" content="no-cache">
+ <meta http-equiv="cache-control" content="no-cache">
+ <meta http-equiv="expires" content="0">
+ 
+<script type="text/javascript" src="js/gl.js"></script>
+<script type="text/javascript" src="js/wl.js"></script>
+<script type="text/javascript" src="js/set.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<style type="text/css">  
+#loginimg {
+ height: 20px;
+ border: 2px solid #FFF;
+}
+#bar_span {
+	display:block;
+	width: 0%;
+	height:20px;
+	background: green;
+}
+</style>
+<script type="text/javascript">
+addCfg('c_SYS_LANGUAGE',0x01190100,'0');
+addCfg('WlMode',0x011a0100,'0');
+addCfg('ssid',0x043c0200,'WiFi-Repeater');
+addCfg('AutoChannelSelect2',0x04370100,'3');
+addCfg('szChannel',0x04070100,'1');
+addCfg('SSIDIndexTemp',0x04e90100,'0');
+addCfg('IEEE8021X2',0x04930200,'0;0;0;0');
+addCfg('AuthMode',0x04960200,'OPEN;OPEN;OPEN;OPEN');
+addCfg('EncrypType',0x04490200,'NONE;NONE;NONE;NONE');
+addCfg('WepDefaultKey2',0x043a0200,'1;1;1;1');
+addCfg('WepKeyLength2',0x04e50200,'0;0;0;0');
+addCfg('Key1TypeTemp',0x049b0200,'0;0;0;0');
+addCfg('Key1Str1Temp',0x049c0200,'11111');
+addCfg('WPAPSK1Temp',0x049a0200,'12345678');
+addCfg('WscConfMode',0x04860100,'7');
+addCfg('DHCPD_EN',0x02020100,'1');
+addCfg('c_bssid_num',0x04360100,'1');
+addCfg('c_ht_extcha',0x04470100,'1');
+addCfg('c_hw_bw',0x04410100,'1');
+addCfg('c_WLN_ApCliEnable',0x04d40100,'1');
+addCfg('WscAuthType2',0x04900100,'1');
+addCfg('WscEncrypType2',0x04910100,'1');
+addCfg('WscConfigured2',0x04870100,'2');
+addCfg('WscNewKey2',0x04920200,'scaptest');
+
+
+var regDomain = "1"*1;
+var channel_index  = "Auto Select"*1; 
+var ssid_idx = "0"*1;
+var authenticationMode = "OPEN;OPEN;OPEN;OPEN";
+var authenticationModeArray = authenticationMode.split(";");
+var wln_wpapsk = "12345678";
+var wln_wpapskArray = wln_wpapsk.split(";");
+var _user_lang = "0"*1;
+var setp = 1;
+function SetProgress(ress) {
+	if (ress){
+		$("#bar_span").css("width", String(ress) + "%");    
+		$("#bar_span").html(String(ress) + "%")          
+	}
+}
+function doProgress() {
+	if (setp <= 100) {
+		setTimeout("doProgress()", 150);
+		SetProgress(setp);	
+		setp++;
+	}
+	else
+	{
+		callBack()
+	}
+}
+function callBack()
+{
+	$('#id_div_info').show();
+	$('#id_wiz_main').addClass("TouMing");
+}
+function CheckValue(f)
+{
+	PromptMsg("errorinfo", glb.nul);
+	if ($('#wl_ssid').val() == "")
+	{
+		PromptMsg("errorinfo", pg_wl_bs.ssidNul);
+		$('#wl_ssid').focus();
+		return false;
+	}
+	
+	// SSID & Channel
+	setCfg('c_SYS_LANGUAGE', _user_lang);
+	setCfg('WlMode', '0'); //AP Mode
+	setCfg('ssid', $('#wl_ssid').val());
+	if ($('#wl_channel').val()==0)
+	{
+		setCfg('AutoChannelSelect2', '3');
+		setCfg('szChannel', '0');
+	}
+	else
+	{
+		setCfg('AutoChannelSelect2', '0');
+		setCfg('szChannel', $('#wl_channel').val());
+		if ($('#wl_channel').val()<7)
+		{
+			setCfg('c_ht_extcha', '1');
+		}
+		else
+			setCfg('c_ht_extcha', '0');
+	}
+	// Security
+	var security_idx = get_by_id("wl_Method").selectedIndex;
+	switch (security_idx)
+	{
+		case 1: // WEP
+			if (checkWepKey(get_by_id("web_pskValue")) == false)
+				return false;
+			setCfg('AuthMode', 'OPEN');
+			setCfg('EncrypType','WEP');
+			setCfg('WepDefaultKey2', "1;1;1;1");
+			setCfg('WscAuthType2', '2');
+			setCfg('WscEncrypType2', '2');
+			setCfg('WscConfigured2', '2');
+		if (get_by_id("web_pskValue").value.length == 5 || get_by_id("web_pskValue").value.length == 13)
+			{
+				setCfg('Key1TypeTemp', '1');
+				setCfg('Key1Str1Temp', $('#web_pskValue').val());
+			}
+			else if (get_by_id("web_pskValue").length == 5 || get_by_id("web_pskValue").length == 13)
+			{
+				setCfg('Key1TypeTemp', '0');
+				setCfg('Key1Str1Temp', $('#web_pskValue').val());
+			}
+			break;
+		case 2: // WPA PSK
+			if (checkWpaPsk(get_by_id("web_pskValue")) == false)
+				return false;
+			setCfg('AuthMode', 'WPAPSK;WPAPSK;WPAPSK;WPAPSK');
+			setCfg('EncrypType','AES;AES;AES;AES');
+			setCfg('WPAPSK1Temp', $('#web_pskValue').val());
+			setCfg('WscAuthType2', '2');
+			setCfg('WscEncrypType2', '8');
+			setCfg('WscConfigured2', '2');
+			setCfg('WscNewKey2', $('#web_pskValue').val());
+			setCfg('WepDefaultKey2', "2;2;2;2");
+			break;
+		case 3: // WPA2 PSK
+			if (checkWpaPsk(get_by_id("web_pskValue")) == false)
+				return false;
+			setCfg('AuthMode', 'WPA2PSK;WPA2PSK;WPA2PSK;WPA2PSK');
+			setCfg('EncrypType','AES;AES;AES;AES');
+			setCfg('WPAPSK1Temp', $('#web_pskValue').val());
+			setCfg('WscAuthType2', '32');
+			setCfg('WscEncrypType2', '8');
+			setCfg('WscConfigured2', '2');
+			setCfg('WscNewKey2', $('#web_pskValue').val());
+			setCfg('WepDefaultKey2', "2;2;2;2");
+			break;
+		case 4: // WPA WPA2 PSK MIX
+			if (checkWpaPsk(get_by_id("web_pskValue")) == false)
+				return false;
+			setCfg('AuthMode', 'WPAPSKWPA2PSK;WPAPSKWPA2PSK;WPAPSKWPA2PSK;WPAPSKWPA2PSK');
+			setCfg('EncrypType','TKIPAES;TKIPAES;TKIPAES;TKIPAES');
+			setCfg('WPAPSK1Temp', $('#web_pskValue').val());
+			setCfg('WepDefaultKey2', "2;2;2;2");
+			setCfg('WscAuthType2', '34');
+			setCfg('WscEncrypType2', '12');
+			setCfg('WscConfigured2', '2');
+			setCfg('WscNewKey2', $('#web_pskValue').val());
+			break;
+		default: // OPEN:NONE
+			setCfg('AuthMode', 'OPEN;OPEN;OPEN;OPEN');
+			setCfg('EncrypType','NONE;NONE;NONE;NONE');
+			setCfg('WepDefaultKey2', "1;1;1;1");
+			setCfg('WscAuthType2', '1');
+			setCfg('WscEncrypType2', '1');
+			setCfg('WscConfigured2', '2');
+			break;
+	}
+	setCfg('IEEE8021X2',"0;0;0;0");
+	//setCfg('WscConfMode', '0'); //disable WPS
+	//setCfg('DHCPD_EN', '0'); //disable DHCP Server
+	setCfg('c_bssid_num', '1');
+	setCfg('c_hw_bw', '1');
+	setCfg('c_WLN_ApCliEnable', '0');
+	
+	form2Cfg(f);
+	$('#loginimg').show();
+	//$('#id_div_info').show();
+	//$('#id_wiz_main').addClass("TouMing");
+	//ajax_form_nobreak('wiz_ap.htm', SetokPage, ajax_data(f, "WIZ_AP", SetokPage));
+	setTimeout("doProgress()", 500)
+	$.ajax({
+		type:'post',
+		url:'wiz_ap.htm',
+		cache: false,
+		data: ajax_data(f, "WIZ_AP", SetokPage)+'&rd='+Math.random(),
+		success:function(){
+			
+		},
+		error:function(XMLHttpRequest, textStatus, errorThrown) {
+			//location.href = "http://"+DefaultIP; 
+		}
+	});
+}
+
+function divClose()
+{
+	setp = 0;
+	SetProgress(setp);	
+	$('#loginimg').hide();
+	$('#id_div_info').hide();
+	$('#id_wiz_main').removeClass("TouMing");
+	GotoWeb('index.htm');
+}
+
+$(document).ready(function() 
+{
+	// fix background heigh
+	InitBgHeigh("wiz_bg");	
+	
+	if (authenticationModeArray[ssid_idx] != "OPEN")
+	{
+		show_div(true, "div_key");
+		if (authenticationModeArray[ssid_idx] == "WPA2PSK" || authenticationModeArray[ssid_idx] == "WPAPSKWPA2PSK")
+		{
+			get_by_id("wl_Method").options.selectedIndex = 3;
+			$('#web_pskValue').val(wln_wpapskArray[ssid_idx]);
+		}
+		else if (authenticationModeArray[ssid_idx] == "WPAPSK")
+		{
+			get_by_id("wl_Method").options.selectedIndex = 2;
+			$('#web_pskValue').val(wln_wpapskArray[ssid_idx]);
+		}
+		else
+		{
+			get_by_id("wl_Method").options.selectedIndex = 1;
+		}
+	}
+	else
+	{
+		show_div(false, "div_key");
+		get_by_id("wl_Method").options.selectedIndex = 0;
+	}
+	
+} 
+) 
+</script>
+</head>
+
+<body>
+<FORM name=WIZ_AP>
+  <div class="container">
+    <div class="title"> <a href="index.htm"><img src="img/logo.gif" /></a> 
+      <script>
+    dw('<input type="button" id="logoff" class="btn_title_logoff title_btn" value="'+pg_title.logoff+'" onclick="logout()" />');</script> 
+    </div>
+    <script>WriteHr();</script> 
+    <!-- end global title -->
+    <div class="content">
+      <div id="wiz_bg">
+        <div id="id_back">
+          <div id="id_back_img"><a href="index.htm"><img class="img_back" src="img/BackButton.png" /></a></div>
+          <div id="id_back_str">
+            <script language="javascript">_T(pg_wiz.ap);</script>
+          </div>
+        </div>
+        <div id="id_div_all" class="on">
+          <div id="id_wiz_main">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td class="head_white"><script language="javascript">_T(gwl.ssid);</script></td>
+                <td><input type="text" class="input_text" id="wl_ssid" name="wl_ssid" maxlength="32" value="WiFi-Repeater" /></td>
+              </tr>
+              <tr>
+                <td class="head_white"><script language="javascript">_T(gwl.chan);</script></td>
+                <td><select class="option" id="wl_channel" name="wl_channel">
+                    <script>
+			  writeChan(regDomain, channel_index);
+			  </script>
+                  </select></td>
+              </tr>
+              <tr>
+                <td class="head_white"><script language="javascript">_T(gwl.encryption);</script></td>
+                <td><select class="option" id="wl_Method" name="wl_Method" onchange="selSecEasy(true)">
+                    <option value="0">
+                    <script language="javascript">_T(glb.disable);</script>
+                    </option>
+                    <option value="1">WEP</option>
+                    <option value="2">WPA&nbsp;
+                    <script language="javascript">_T(gwl.psk);</script>
+                    </option>
+                    <option value="3">WPA2&nbsp;
+                    <script language="javascript">_T(gwl.psk);</script>
+                    </option><!--
+                    <option value="6">WPA/WPA2&nbsp;
+                    <script language="javascript">_T(gwl.psk);</script>
+                    </option> -->
+                  </select></td>
+              </tr>
+            </table>
+            <span id="div_key" class="off">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td class="head_white"><script language="javascript">_T(gwl.key);</script></td>
+                <td><span id="Keysp">
+                  <input type="password" class="input_text" name="web_pskValue" id="web_pskValue" maxlength="64" onkeyup="CountLeng(this, 'c_p')" value="" />
+                  </span> &nbsp;<font id="c_p"></font></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td><input type="checkbox" name="wpa_key_unmask" value="0" onClick="unmask(this.checked,'Keysp','web_pskValue','web_pskValue','c_p',64 );" >
+                  <script language="javascript">_T(glb.unmask);</script></td>
+              </tr>
+            </table>
+            </span>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td height="20px"><font id="errorinfo"></font><div class="off" id="loginimg"><span  id="bar_span"> </span></div><!--<img class="off" id="loginimg" src="img/login_load.gif" />--></td>
+              </tr>
+            </table>
+            <div id="id_wiz_foot">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="right"><script type="text/javascript">dw('<input class="input_btn_wiz" type="button" value="'+ glb.apply +'" name="login" onClick="CheckValue(this.form)">');</script> 
+                    <script type="text/javascript">dw('<input class="input_btn_wiz" type="button" value="'+ glb.cancel +'"  onClick="GotoWeb(\'index.htm\')">');</script></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="id_div_info" class="off">
+        <p>
+          <script language="javascript">_T(pg_setok.msg4);</script>
+        </p>
+        <font id="id_p_info"></font>
+        <div>
+          <p> <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td valign="bottom" align="middle">
+            <script type="text/javascript">dw('<input class="input_btn_wiz" type="button" value="'+ glb.closew +'" name="wdclose" id="wdclose" onclick="divClose()" />');</script> </td>
+              </tr>
+            </table>
+          </p>
+        </div>
+      </div>
+      </div>
+      <!-- end .content --></div>
+    <!-- end .container --></div>
+</FORM>
+</body>
+</html>

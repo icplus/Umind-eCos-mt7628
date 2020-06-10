@@ -1,0 +1,314 @@
+/****************************************************************************
+ *mjh hello world
+ ***************************************************************************
+*/
+
+//==============================================================================
+//                                INCLUDE FILES
+//==============================================================================
+// simple include file
+#include <stdio.h>
+#include <cyg/kernel/kapi.h>  //HAL_REG32  cyg_thread_create
+
+//include file in cgi_api.c for iwpriv cmd
+
+//==============================================================================
+//                               LOCAL VARIABLES
+//==============================================================================
+#define WATCHDOG_TIMEOUT 30 /* 30 sec default timeout */
+#define RALINK_SYSCTL_BASE 0xB0000000             //gpiomode base
+#define RALINK_TIMER_BASE 0xB0000100
+#define TMRSTAT     (RALINK_TIMER_BASE)  /* Timer Status Register */
+#define TMR0LOAD    (TMRSTAT + 0x10)  /* Timer0 Load Value */
+#define TMR0VAL     (TMRSTAT + 0x14)  /* Timer0 Counter Value */
+#define TMR0CTL     (TMRSTAT + 0x18)  /* Timer0 Control */
+#define TMR1LOAD    (TMRSTAT + 0x20)  /* Timer1 Load Value */
+#define TMR1VAL     (TMRSTAT + 0x24)  /* Timer1 Counter Value */
+#define TMR1CTL     (TMRSTAT + 0x28)  /* Timer1 Control */
+#define SYSCFG      RALINK_SYSCTL_BASE + 0x10  /* System Configuration Register */
+#define GPIOMODE    RALINK_SYSCTL_BASE + 0x60
+#define RALINK_REG_GPIOMODE2		(GPIOMODE + 0x4)  //7628
+
+//mjh from 7628 sdk
+#define RALINK_IRQ_ADDR			RALINK_INTCL_BASE
+#define RALINK_PRGIO_ADDR		RALINK_PIO_BASE    //gpio dir base
+
+//search in rt_mmap.h pwd : sdk asm/rt2880
+#define RALINK_INTCL_BASE		0xB0000200
+#define RALINK_PIO_BASE			0xB0000600
+
+#define RALINK_REG_INTENA		(RALINK_IRQ_ADDR   + 0x80)
+#define RALINK_REG_INTDIS		(RALINK_IRQ_ADDR   + 0x78)
+
+#define RALINK_REG_PIOINT		(RALINK_PRGIO_ADDR + 0x90)
+#define RALINK_REG_PIOEDGE		(RALINK_PRGIO_ADDR + 0xA0)
+#define RALINK_REG_PIORENA		(RALINK_PRGIO_ADDR + 0x50)
+#define RALINK_REG_PIOFENA		(RALINK_PRGIO_ADDR + 0x60)
+#define RALINK_REG_PIODATA		(RALINK_PRGIO_ADDR + 0x20)
+#define RALINK_REG_PIODIR		(RALINK_PRGIO_ADDR + 0x00)
+#define RALINK_REG_PIOSET		(RALINK_PRGIO_ADDR + 0x30)
+#define RALINK_REG_PIORESET		(RALINK_PRGIO_ADDR + 0x40)
+//--------------------------------------------------
+#define RALINK_REG_PIO6332INT		(RALINK_PRGIO_ADDR + 0x94)
+#define RALINK_REG_PIO6332EDGE		(RALINK_PRGIO_ADDR + 0xA4)
+#define RALINK_REG_PIO6332RENA		(RALINK_PRGIO_ADDR + 0x54)
+#define RALINK_REG_PIO6332FENA		(RALINK_PRGIO_ADDR + 0x64)
+#define RALINK_REG_PIO6332DATA		(RALINK_PRGIO_ADDR + 0x24)
+#define RALINK_REG_PIO6332DIR		(RALINK_PRGIO_ADDR + 0x04)
+#define RALINK_REG_PIO6332SET		(RALINK_PRGIO_ADDR + 0x34)
+#define RALINK_REG_PIO6332RESET		(RALINK_PRGIO_ADDR + 0x44)
+
+#define RALINK_REG_PIO9564INT		(RALINK_PRGIO_ADDR + 0x98)
+#define RALINK_REG_PIO9564EDGE		(RALINK_PRGIO_ADDR + 0xA8)
+#define RALINK_REG_PIO9564RENA		(RALINK_PRGIO_ADDR + 0x58)
+#define RALINK_REG_PIO9564FENA		(RALINK_PRGIO_ADDR + 0x68)
+#define RALINK_REG_PIO9564DATA		(RALINK_PRGIO_ADDR + 0x28)
+#define RALINK_REG_PIO9564DIR		(RALINK_PRGIO_ADDR + 0x08)
+#define RALINK_REG_PIO9564SET		(RALINK_PRGIO_ADDR + 0x38)
+#define RALINK_REG_PIO9564RESET		(RALINK_PRGIO_ADDR + 0x48)
+
+
+//mjh
+extern char *mjh_str1;
+extern char *mjh_str2;
+extern char *mjh_ssid;
+extern int CmdIwpriv(int argc, char *argv[]);
+extern char mjh_Connect;
+//thread
+static cyg_handle_t cli_thread_h;
+static cyg_thread cli_thread;
+static char cli_stack[4096*2];
+
+//wifi
+int get_singal(char *input)     //input is the name of connected wifi
+{
+	char *p=NULL;
+	//char *reset_channel = NULL;
+	//char channel[4]; 
+	char ssid[186], bssid[20], security[23];
+	char signal[9];
+
+	char signal_shu;
+	char channel_shu;
+
+	//reset_channel = malloc(15);
+	
+	//system("iwpriv ra0 set AutoChannelSel=1");
+	//set autochannel
+	char *string1[]={
+	"ra0",
+	"set",
+	"SiteSurvey="
+	};
+	CmdIwpriv(3,string1);
+	cyg_thread_delay(10);
+	
+	char *string2[]={
+	"ra0",
+	"get_site_survey"
+	};
+	Cmd_mjh(2,string2);
+	cyg_thread_delay(10);
+
+	//CmdIwpriv("ra0","set","AutoChannelSel=1");
+	//Cmd_mjh("ra0","get","get_site_survey");
+
+	p = strstr(mjh_str1, input);  //search
+	if(p != NULL)   //存在ssid
+	{
+	sscanf(p, "%s %s %s %s", ssid, bssid, security, signal);
+	/*	
+	p = p-4;
+	sscanf(p, "%s %s %s %s %s", channel, ssid, bssid, security, signal);
+	*/
+	}
+	else if(strstr(mjh_str2, input) != NULL)
+	{
+	sscanf(strstr(mjh_str2, input), "%s %s %s %s", ssid, bssid, security, signal);
+	/*
+	p = strstr(mjh_str2, input)-4;
+	sscanf(p, "%s %s %s %s %s", channel, ssid, bssid, security, signal);
+	*/
+	}
+	else
+	{
+		printf("not found ssid\n");
+		free(mjh_str1);
+		return -1;
+	}
+	free(mjh_str1);
+	/*
+	//reset channel
+	channel_shu = atoi(channel);
+	sprintf(reset_channel,"Channel=%d",channel_shu);
+
+	char *string3[]={
+	"ra0",
+	"set",
+	reset_channel
+	};
+	CmdIwpriv(3,string3);
+	cyg_thread_delay(10);		
+	free(reset_channel);
+	*/
+	
+	signal_shu =  atoi(signal);
+	/*	
+	if(signal[1] != ' ')
+		signal_shu = 10*(signal[0]-48)+(signal[1]-48);
+	else
+		signal_shu = signal[0]-48;
+	*/
+	printf("signal = %d\n",signal_shu);
+	return signal_shu;
+}
+
+//cmm_info.c change
+int is_connect(void) //return : disconnect <0   signal >0  
+{
+	char *p;
+	char signal;
+	char *string[]={
+	"apcli0",
+	"show",
+	"connStatus"
+	};
+	CmdIwpriv(3,string);
+	cyg_thread_delay(10);
+	
+
+	//Cmd_mjh("apcli0","show","connStatus");
+	if(mjh_Connect == 1)   //存在ssid  connect
+	{
+		printf("connect the ssid : %s\n",mjh_ssid);
+		signal=get_singal(mjh_ssid);
+		led_control(signal);
+		return signal;
+	}
+	else   //not connect
+	{
+		printf("not connect\n");
+		weak();
+		return -1;
+	}			
+}
+
+
+//led control
+void disconnect(void)
+{
+	unsigned int result;
+	result = HAL_REG32(RALINK_REG_PIODATA); //31  wps led
+	result |= 0x10000000;                 //led off
+	HAL_REG32(RALINK_REG_PIODATA) = result;
+
+	result = HAL_REG32(RALINK_REG_PIO6332DATA); //32 33 34 signal led
+	result |= 0x7;                         //led off
+	HAL_REG32(RALINK_REG_PIO6332DATA) = result;
+}
+
+void weak(void)  //siganl led all off
+{
+	unsigned int result;
+	result = HAL_REG32(RALINK_REG_PIO6332DATA); //32 33 34 signal led
+	result |= 0x7;                         //led off
+	HAL_REG32(RALINK_REG_PIO6332DATA) = result;	
+}
+
+void low(void)
+{
+	unsigned int result;
+	disconnect();
+
+	result = HAL_REG32(RALINK_REG_PIO6332DATA); //32
+	result &= ~0x1;                         //led1 on
+	HAL_REG32(RALINK_REG_PIO6332DATA) = result;
+
+}
+
+void middle(void)
+{
+	unsigned int result;
+	disconnect();
+
+	result = HAL_REG32(RALINK_REG_PIO6332DATA); //32 33
+	result &= ~0x3;                         //led1 led2 on
+	HAL_REG32(RALINK_REG_PIO6332DATA) = result;
+}
+
+void high(void)
+{
+	unsigned int result;
+	result = HAL_REG32(RALINK_REG_PIODATA); //31
+	result &= ~0x10000000;                 //led on
+	HAL_REG32(RALINK_REG_PIODATA) = result;
+
+	result = HAL_REG32(RALINK_REG_PIO6332DATA); //32 33 34
+	result &= ~0x7;                         //led1 led2 led3 on
+	HAL_REG32(RALINK_REG_PIO6332DATA) = result;
+}
+
+void led_init(void)  //led all off
+{
+	unsigned int result;
+	result = HAL_REG32(RALINK_REG_GPIOMODE2);
+	result &= ~0x3fc0000;    //clear 0    31 32 33 34
+	result |= 0x1540000;     //set 1
+	HAL_REG32(RALINK_REG_GPIOMODE2) = result;
+
+	result = HAL_REG32(RALINK_REG_PIODIR);   //31  output dir set 1
+	result |= 0x80000000;
+	HAL_REG32(RALINK_REG_PIODIR) = result;
+
+	result = HAL_REG32(RALINK_REG_PIO6332DIR); //32 33 34
+	result |= 0x07; 
+	HAL_REG32(RALINK_REG_PIO6332DIR) = result;
+
+	disconnect();
+}
+
+
+//led control due to siganl
+void led_control(char signal)
+{
+	if(signal < 20)
+		weak();
+	else if(signal  < 50 && signal >= 20)
+		low();
+	else if(signal < 70 && signal >=50)
+		middle();
+	else if(signal > 70)
+		high();
+	else
+		weak();
+}
+
+
+void CLI_mjh_proc(void)
+{
+	printf("in thread\n");
+	while(1)
+	{
+	;//is_connect();
+	
+	}	
+	printf("the end\n");
+}
+
+void mjh_start(int cmd)
+{
+    led_init();
+	
+    if (cmd)
+    {
+    cyg_thread_create(8, (cyg_thread_entry_t *)CLI_mjh_proc,NULL,"CLI_thread",
+                  (void *)&cli_stack[0], sizeof(cli_stack), &cli_thread_h, &cli_thread);
+    cyg_thread_resume(cli_thread_h);
+    }
+}
+
+
+void hello(void)
+{
+	printf("hello world\n");
+}

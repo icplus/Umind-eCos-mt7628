@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WiFi-Repeater Web Server</title>
+<link rel="stylesheet" href="style/gl.css" type="text/css">
+<link rel="stylesheet" href="style/common.css" type="text/css">
+<script type="text/javascript" src="js/lang_en.js?v=1529017603"></script>
+<meta http-equiv="pragma" content="no-cache">
+ <meta http-equiv="cache-control" content="no-cache">
+ <meta http-equiv="expires" content="0">
+ 
+<script type="text/javascript" src="js/gl.js"></script>
+<script type="text/javascript" src="js/wl.js"></script>
+<script type="text/javascript" src="js/set.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<style type="text/css">  
+#loginimg {
+ height: 20px;
+ border: 2px solid #FFF;
+}
+#bar_span {
+	display:block;
+	width: 0%;
+	height:20px;
+	background: green;
+}
+</style>
+<script type="text/javascript">
+var setp = 1;
+function SetProgress(ress) {
+	if (ress){
+		$("#bar_span").css("width", String(ress) + "%");    
+		$("#bar_span").html(String(ress) + "%")          
+	}
+}
+function doProgress() {
+	if (setp <= 100) {
+		setTimeout("doProgress()", 350);
+		SetProgress(setp);	
+		setp++;
+	}
+	else
+	{
+		callBack()
+	}
+}
+function callBack()
+{
+	$('#id_div_info').show();
+	$('#id_man_main').addClass("TouMing");
+}
+function divClose()
+{
+	setp = 0;
+	SetProgress(setp);	
+	$('#loginimg').hide();
+	$('#id_div_info').hide();
+	$('#id_man_main').removeClass("TouMing");
+	GotoWeb('index.htm');
+}
+function CheckValue(F)
+{
+	PromptMsg("errorinfo_black", "");
+	//$("#loginimg").hide();
+	var firm = get_by_id("files");
+	if (firm.value=="")
+	{
+		firm.focus();
+		PromptMsg("errorinfo_black", pg_upload.nofile);
+		return false;
+	}
+	PromptMsg("errorinfo_black", pg_setok.msg2_i);
+	$("#loginimg").show();
+	setTimeout("doProgress()", 500);
+	setTimeout('location="index.htm"',35000);
+	F.submit() ;
+}
+$(document).ready(function() 
+{
+	// fix background heigh
+	InitBgHeigh("man_bg");	
+} 
+) 
+</script>
+</head>
+
+<body>
+<form name=frmSetup method=POST action=setok.htm enctype=multipart/form-data>
+  <input type=hidden name=CMD value=SYS_UPG>
+  <INPUT type=hidden name=GO value=firmware.htm>
+  <div class="container">
+    <div class="title"> <a href="index.htm"><img src="img/logo.gif" /></a> 
+      <script>
+    dw('<input type="button" id="logoff" class="btn_title_logoff title_btn" value="'+pg_title.logoff+'" onclick="logout()" />');</script> 
+    </div>
+    <script>WriteHr();</script> 
+    <!-- end global title -->
+    <div class="content">
+      <div id="man_bg">
+        <div id="id_back">
+          <div id="id_back_img"><a href="index.htm"><img class="img_back" src="img/BackButton.png" /></a></div>
+          <div id="id_back_str">
+            <script language="javascript">_T(pg_home.mn_firm);</script>
+          </div>
+        </div>
+        <div id="id_man_main">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td class="head_white"><script language="javascript">_T(pg_upload.firmver);</script></td>
+              <td>v28K.RPT.20180614</td>
+            </tr>
+            <tr>
+              <td class="head_white"><script language="javascript">_T(pg_upload.selfile);</script></td>
+              <td><input type="file" class="input_man_text" id="files" name="files" /></td>
+            </tr>
+            <tr>
+              <td class="head_white"></td>
+              <td><font id="errorinfo_black"></font></td>
+            </tr>
+          </table>		  
+		     <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td height="20px"><font id="errorinfo"></font><div class="off" id="loginimg"><span id="bar_span"> </span></div></td>
+              </tr>
+            </table>
+          <div id="id_man_foot">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td align="right"><script type="text/javascript">document.write('<input class="input_btn_next" type="button" value="'+ pg_upload.upload +'" name="login" onClick="CheckValue(this.form)">');</script> 
+                  <script type="text/javascript">document.write('<input class="input_btn_next" type="button" value="'+ glb.cancel +'"  onClick="GotoWeb(MainPage)">');</script></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+		<div id="id_div_info" class="off">
+        <p>
+          <script language="javascript">_T(pg_setok.msg4);</script>
+        </p>
+        <font id="id_p_info"></font>
+        <div>
+          <p> <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td valign="bottom" align="middle">
+            <script type="text/javascript">dw('<input class="input_btn_wiz" type="button" value="'+ glb.closew +'" name="wdclose" id="wdclose" onclick="divClose()" />');</script> </td>
+              </tr>
+            </table>
+          </p>
+        </div>
+      </div>
+      </div>
+      <!-- end .content --></div>
+    <!-- end .container --></div>
+</form>
+</body>
+</html>
+
+

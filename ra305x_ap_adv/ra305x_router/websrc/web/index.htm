@@ -1,0 +1,335 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WiFi-Repeater Web Server</title>
+<link rel="stylesheet" href="style/gl.css" type="text/css">
+<script type="text/javascript" src="js/lang_en.js"></script>
+<meta http-equiv="pragma" content="no-cache">
+ <meta http-equiv="cache-control" content="no-cache">
+ <meta http-equiv="expires" content="0">
+ 
+<script type="text/javascript" src="js/gl.js"></script>
+<script type="text/javascript" src="js/set.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<link rel="stylesheet" href="style/index.css" type="text/css">
+<script>
+<%
+CGI_MAP(opmode, CFG_SYS_OPMODE);
+CGI_MAP(lang, CFG_SYS_Language);
+%>
+
+var v_wlmode = 1*getCfg("opmode");
+var _user_lang = 1*getCfg("lang");
+var _firmareDate=dateStrC(<%CGI_FMW_BUILD_SEC();%>);
+var _uptime="<% CGI_UPTIME(); %>";
+var v_wlan_ssid1 = "<% CGI_CFG_GET(CFG_WLN_SSID1); %>";
+var v_wlan_ApCliSsid = "<% CGI_CFG_GET(CFG_WLN_ApCliSsid); %>";
+var FirwareVerion="v<%CGI_CUST_VER_STR();%>";
+var ssid_idx = "0"*1;
+var authenticationMode = "<% CGI_CFG_GET(CFG_WLN_AuthMode); %>";
+var authenticationModeArray = authenticationMode.split(";");
+var encryp_type_mode = "<% CGI_CFG_GET(CFG_WLN_EncrypType); %>";
+var encryp_type_modeArray = encryp_type_mode.split(";");
+var apcli_connect_status="0";
+
+var dynList=new Array(
+/*REAL
+<% CGI_GET_DHC_DYN_LIST(); %>
+REAL*/
+);
+var clintLen = dynList.lenght;
+function showImg(type)
+{
+	get_by_id("id_wiz_img_ap").className = 'off';
+	get_by_id("id_wiz_img_rep").className = 'off';
+	get_by_id("div_wiz_ap").className = 'div_wiz_nosel'
+	get_by_id("div_wiz_rep").className = 'div_wiz_nosel'
+	if (type == 0)
+	{
+		get_by_id("id_wiz_img_ap").className = 'on';
+		get_by_id("div_wiz_ap").className = 'div_wiz_sel'
+	}
+	else
+	{
+		get_by_id("id_wiz_img_rep").className = 'on';
+		get_by_id("div_wiz_rep").className = 'div_wiz_sel'
+	}
+}
+function initShow()
+{
+  if (v_wlmode == 3)
+    showImg(1);
+  else
+    showImg(0);
+}
+
+$(document).ready(function(){
+	initShow();
+	$('#drv_btime').html("&nbsp;&nbsp;"+_firmareDate);
+	$('#drv_uptime').html("&nbsp;&nbsp;"+parseTime(_uptime));
+});
+</script>
+</head>
+
+<body>
+<div class="container">
+	<div class="title"> <a href="index.htm"><img src="img/logo.gif"></a> 
+		<script>
+			dw('<input type="button" id="logoff" class="btn_title_logoff title_btn" value="'+pg_title.logoff+'" onclick="logout()" />');
+		</script>
+	</div>
+  <div>
+	  <table width="100%" cellspacing="0" cellpadding="0" border="0">
+		  <tbody>
+			  <tr>
+				  <td width="120px"><hr></td>
+				  <td class="title_info">More Range for Wireless Network</td>
+				  <td width="500px"><hr></td>
+			  </tr>
+		  </tbody>
+	  </table>
+  </div>
+  <!-- end global title -->
+  <div class="content">
+    <div class="index_l1">
+      <div class="index_l1l">
+        <table width="100%" height="180px" cellspacing="0" cellpadding="0" border="0">
+          <tbody>
+			  <tr>
+					<td class="main_wiz_l">
+						<div>
+							<div id="div_wiz"><script language="javascript">_T(pg_home.wiz);</script></div>
+							<a href="wiz_ap.htm">
+								<div id="div_wiz_ap" class="div_wiz_sel" onmouseover="showImg(0)">
+									<script language="javascript">_T(pg_home.ap);</script>
+								</div>
+							</a> 
+							<a href="wiz_rep.htm">
+								<div id="div_wiz_rep" class="div_wiz_nosel" onmouseover="showImg(1)">
+									<script language="javascript">_T(pg_home.rep);</script>
+								</div>
+							</a>
+						</div>
+					</td>
+					<td class="main_wiz_r" valign="middle">
+						<script type="text/javascript">
+							if(_user_lang == "1")
+								document.write('<img class="off" id="id_wiz_img_ap" src="img/ap_zh.gif" /><img class="off" id="id_wiz_img_rep" src="img/rep_zh.gif" />');
+							else
+								document.write('<img class="off" id="id_wiz_img_ap" src="img/ap_en.gif" /><img class="off" id="id_wiz_img_rep" src="img/rep_en.gif" />');
+						</script>
+					</td>
+				</tr>
+        </tbody></table>
+        <!----></div>
+		<div class="index_l1r">
+      <div id="div_stat">
+          <table width="100%" height="100%" cellspacing="0" cellpadding="0" border="0">
+            <tbody><tr>
+              <td width="3%">&nbsp;</td>
+              <td width="97%" valign="middle"><table width="100%" cellspacing="0" cellpadding="1" border="0">
+                  <tbody><tr class="main_info" r="">
+                    <th align="left"><script language="javascript">_T(pg_home.wl_status);</script></th>
+                  </tr>
+                </tbody></table>
+                <table width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tbody><tr class="main_info">
+                    <td width="35%"><script language="javascript">_T(glb.mode);</script></td>
+                    <td>
+						<script type="text/javascript">
+						if (v_wlmode==3)
+							dw(pg_home.rep);
+						else
+							dw(pg_home.ap);
+						</script>
+					</td>
+                  </tr>
+                  <tr class="main_info">
+                    <td width="35%"><script language="javascript">_T(glb.status);</script></td>
+                    <td id="drv_status"><script type="text/javascript">
+                    var v_radio_on = "1"*1;
+					if (v_radio_on==1)
+						dw(glb.enabled);
+					else
+						dw(glb.disabled);
+                    </script></td>
+					</tr>
+					<tr class="main_info">
+                    <td width="35%">
+						<script>
+							if(v_wlmode==3)
+								dw(glb.conto);
+							else
+								dw(gwl.ssid);
+						</script>
+					</td>
+                    <td id="drv_ssid">
+                    <script>
+                    	if (v_wlmode == 3){
+							if (apcli_connect_status == 0)
+								dw(v_wlan_ApCliSsid);
+							else
+								dw(" ");
+						}
+                    	else
+                    		dw(v_wlan_ssid1);
+                    </script>
+                    </td>
+					</tr>
+					<tr class="main_info">
+						<td width="35%"><script language="javascript">_T(gwl.chan);</script></td>
+						<td id="drv_chan"><% CGI_CFG_GET(CFG_WLN_Channel); %></td>
+					</tr>
+					<tr class="main_info">
+						<td width="35%"><script language="javascript">_T(gwl.sec);</script></td>
+						<td id="drv_wep">
+							<script>
+								if ((authenticationModeArray[ssid_idx] == "OPEN" ||authenticationModeArray[ssid_idx] == "SHARED" || authenticationModeArray[ssid_idx] == "WEPAUTO") && encryp_type_modeArray[ssid_idx] == "WEP")
+									dw("WEP");
+								else if (authenticationModeArray[ssid_idx] == "OPEN" && authenticationModeArray[ssid_idx] == "NONE")
+									dw(glb.disable);
+								else
+									dw(authenticationModeArray[ssid_idx]);
+							</script>
+						</td>
+					</tr>
+                  <tr id="cli_Num" class="main_info">
+                    <td width="35%"><script language="javascript">_T(gwl.client);</script></td>
+                    <td id="drv_client"><script>dw(clintLen);</script></td>
+                  </tr>
+                </tbody></table></td>
+            </tr>
+          </tbody></table>
+        </div>
+      </div>
+      </div>
+    <div class="index_l2">
+      <div class="index_w1">
+        <table width="100%" height="180px" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td width="30px">&nbsp;</td>
+            <td width="130px"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td><a href="wl_basic.htm" ><img class="main_img" src="img/main_wlan.png"/></a></td>
+                </tr>
+                <tr>
+                  <td class="main_tit"><a href="wl_basic.htm" ><script language="javascript">_T(pg_home.wl);</script></a></td>
+                </tr>
+              </table></td>
+            <td width="40px">&nbsp;</td>
+            <td valign="middle"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <script type="text/javascript">HomeMainList(wl_menu);</script>
+              </table></td>
+          </tr>
+        </table>
+      </div>
+      <div class="index_w2">
+        <table width="100%" height="180px" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td width="30px">&nbsp;</td>
+            <td width="130px"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td><a href="lan.htm"><img class="main_img" src="img/main_net.png"/></a></td>
+                </tr>
+                <tr>
+                  <td class="main_tit"><a href="lan.htm"> <script language="javascript">_T(pg_home.net);</script></a></td>
+                </tr>
+              </table></td>
+            <td width="40px">&nbsp;</td>
+            <td valign="middle"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr class="main_info">
+                  <td width="35%"><script language="javascript">_T(gnet.ip);</script></td>
+                  <td><% CGI_CFG_GET(CFG_LAN_IP); %></td>
+                </tr>
+                <tr class="main_info">
+                  <td width="35%"><script language="javascript">_T(gnet.dhcp);</script></td>
+                  <td>
+					  <script>
+						  if ('1'*1 == 1)
+							dw(pg_lan.svr);
+						  else
+							dw(glb.disable);
+					  </script>
+				  </td>
+                </tr>
+                <tr class="main_info">
+                  <td width="35%"><script language="javascript">_T(gnet.mac);</script></td>
+                  <td><% CGI_LAN_MAC();%></td>
+                </tr>
+              </table></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div class="index_l3">
+      <div class="index_w3">
+        <table width="100%" height="180px" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td width="30px">&nbsp;</td>
+            <td width="130px">
+			<table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td><img class="main_img" src="img/main_set.png"/></td>
+                </tr>
+                <tr>
+                  <td class="main_tit">Management</td>
+                </tr>
+            </table>
+			</td>
+            <td width="40px">&nbsp;</td>
+            <td valign="middle">
+			<table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <script type="text/javascript">HomeMainList(mn_menu);</script>
+              </table>
+			  </td>
+          </tr>
+        </table>
+      </div>
+      <div class="index_w4">
+        <table width="100%" height="180px" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td width="30px">&nbsp;</td>
+            <td width="130px"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td><a href="status.htm"><img class="main_img" src="img/main_stat.png"/></a></td>
+                </tr>
+                <tr>
+                  <td class="main_tit"><a href="status.htm"> <script language="javascript">_T(pg_home.st);</script> </a></td>
+                </tr>
+              </table></td>
+            <td width="40px">&nbsp;</td>
+            <td valign="middle"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr class="main_info">
+                  <td><script language="javascript">_T(pg_upload.firmver);</script></td>
+                </tr>
+                <tr class="main_info">
+                  <td><script language="JavaScript">dw(FirwareVerion);</script></td>
+                </tr>
+              </table>
+              <br />
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr class="main_info">
+                  <td><script language="javascript">_T(pg_status.uptime);</script></td>
+                </tr>
+                <tr class="main_info">
+                  <td id="drv_uptime"></td>
+                </tr>
+              </table>
+              <br />
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr class="main_info">
+                  <td><script language="javascript">_T(pg_status.btime);</script></td>
+                </tr>
+                <tr class="main_info">
+                  <td id="drv_btime"></td>
+                </tr>
+              </table></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <!-- end .content --></div>
+  <!-- end .container --></div>
+</body>
+</html>

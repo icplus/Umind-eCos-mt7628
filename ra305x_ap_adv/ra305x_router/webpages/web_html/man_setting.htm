@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WiFi-Repeater Web Server</title>
+<link rel="stylesheet" href="style/gl.css" type="text/css">
+<link rel="stylesheet" href="style/common.css" type="text/css">
+<script type="text/javascript" src="js/lang_en.js?v=1529017603"></script>
+<meta http-equiv="pragma" content="no-cache">
+ <meta http-equiv="cache-control" content="no-cache">
+ <meta http-equiv="expires" content="0">
+ 
+<script type="text/javascript" src="js/gl.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<style type="text/css">  
+#loginimg {
+ height: 20px;
+ border: 2px solid #FFF;
+}
+#bar_span {
+	display:block;
+	width: 0%;
+	height:20px;
+	background: green;
+}
+</style>
+<SCRIPT type="text/javascript">
+var setp = 1;
+function SetProgress(ress) {
+	if (ress){
+		$("#bar_span").css("width", String(ress) + "%");    
+		$("#bar_span").html(String(ress) + "%")          
+	}
+}
+function doProgress() {
+	if (setp <= 100) {
+		setTimeout("doProgress()", 150);
+		SetProgress(setp);	
+		setp++;
+	}
+	else
+	{
+		callBack()
+	}
+}
+function callBack()
+{
+	$('#id_div_info').show();
+	$('#id_wiz_main').addClass("TouMing");
+}
+function divClose()
+{
+	setp = 0;
+	SetProgress(setp);	
+	$('#loginimg').hide();
+	$('#id_div_info').hide();
+	$('#id_man_main').removeClass("TouMing");
+	GotoWeb('index.htm');
+}
+function configSave(f){
+	
+   f.CCMD.value = 2;	
+   f.action="profile.bin"
+   f.submit() ;
+}
+function loadConfirm(f){
+	if (f.files.value=="")
+	{
+		alert(pg_set.nofile)
+		return ;
+	}	
+	f.CCMD.value = 3;	
+	f.action="setok.htm";	
+	f.encoding="multipart/form-data" ;
+	setTimeout("doProgress()", 500);
+    f.submit()
+}
+function restoreConfirm(f){
+	if( !confirm(pg_set.resetmsg) )	
+		return;
+	$('#loginimg').show();
+	setTimeout("doProgress()", 600);
+	ajax_form('man_setting.htm', SetokPage, "CMD=SYS_CONF&CCMD=1");
+}
+$(document).ready(function() 
+{
+	// fix background heigh
+	InitBgHeigh("man_bg");	
+	//get_by_id("save").value = pg_set.save;
+	//get_by_id("load").value = pg_set.upload;
+	get_by_id("reset").value = pg_set.resetdefault;
+} 
+) 
+</script>
+</head>
+
+<body>
+<form name=frmSetup method=POST enctype=multipart/form-data>
+<INPUT type=hidden name=CMD value=SYS_CONF>
+<INPUT type=hidden name=GO value=man_setting.htm>
+<INPUT type=hidden name=CCMD value="100">
+<div class="container">
+  <div class="title"> <a href="index.htm"><img src="img/logo.gif" /></a> 
+    <script>
+    dw('<input type="button" id="logoff" class="btn_title_logoff title_btn" value="'+pg_title.logoff+'" onclick="logout()" />');</script> 
+  </div>
+  <script>WriteHr();</script> 
+  <!-- end global title -->
+  <div class="content">
+    <div id="man_bg">
+  <div id="id_back">
+    <div id="id_back_img"><a href="index.htm"><img class="img_back" src="img/BackButton.png" /></a></div>
+    <div id="id_back_str">
+      <script language="javascript">_T(pg_home.mn_set);</script>
+    </div>
+  </div>
+  <div id="id_man_main">
+    <!-- 
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+          <td class="head_white"><script language="javascript">_T(pg_set.save2file);</script></td>
+          <td valign="middle"><input type="button" class="input_btn_reset" id="save" name="save" value="" onclick="configSave(document.frmSetup);" /></td>
+        </tr>
+      </table>
+    <br />
+    <br />
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+          <td class="head_white" valign="middle"><script language="javascript">_T(pg_set.loadformfile);</script></td>
+          <td valign="middle"><input type="file" class="input_man_text" id="binary" name="binary" /><br /><input type="submit" class="input_btn_reset" value="" id="load" name="load" onclick="return loadConfirm(this.form)" /></td>
+        </tr>
+      </table>
+    <br />
+    <br />
+	-->
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+          <td class="head_white"><script language="javascript">_T(pg_set.restore);</script></td>
+          <td valign="middle"><input type="button" class="input_btn_reset" id="reset" name="reset" value="" onclick="restoreConfirm(this.form)" /></td>
+        </tr>
+      </table>
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+      
+        <td class="head_white"></td>
+              <td><font id="errorinfo_black"></font></td>
+            </tr>
+          </table>		  
+		     <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td height="20px"><font id="errorinfo"></font><div class="off" id="loginimg"><span id="bar_span"> </span></div></td>
+    </table>
+  </div>
+		<div id="id_div_info" class="off">
+        <p>
+          <script language="javascript">_T(pg_setok.msg4);</script>
+        </p>
+        <font id="id_p_info"></font>
+        <div>
+          <p> <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td valign="bottom" align="middle">
+            <script type="text/javascript">dw('<input class="input_btn_wiz" type="button" value="'+ glb.closew +'" name="wdclose" id="wdclose" onclick="divClose()" />');</script> </td>
+              </tr>
+            </table>
+          </p>
+        </div>
+      </div>
+</div>
+    <!-- end .content --></div>
+  <!-- end .container --></div>
+  </form>
+</body>
+</html>
+

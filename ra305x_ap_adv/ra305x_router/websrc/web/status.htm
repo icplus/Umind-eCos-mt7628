@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WiFi-Repeater Web Server</title>
+<link rel="stylesheet" href="style/gl.css" type="text/css">
+<link rel="stylesheet" href="style/common.css" type="text/css">
+<script type="text/javascript" src="js/lang_en.js?v=1529017603"></script>
+<meta http-equiv="pragma" content="no-cache">
+ <meta http-equiv="cache-control" content="no-cache">
+ <meta http-equiv="expires" content="0">
+ 
+<script type="text/javascript" src="js/gl.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script>
+var _firmareDate=dateStrC(1529017603);
+var _uptime="88289";
+
+var c_wlmode = "<% CGI_CFG_GET(CFG_SYS_OPMODE); %>"*1;
+var c_wirelessmode = "<% CGI_CFG_GET(CFG_WLN_MODE); %>"*1; 
+var ssid_idx = "<% CGI_CFG_GET(CFG_WLN_Channel); %>"*1;
+var authenticationMode = "<% CGI_CFG_GET(CFG_WLN_AuthMode); %>";
+var authenticationModeArray = authenticationMode.split(";");
+var encryp_type_mode = "<% CGI_CFG_GET(CFG_WLN_EncrypType); %>";
+var encryp_type_modeArray = encryp_type_mode.split(";");
+var ApCliConnStatus = "";
+var ApCliConnStatusArray=ApCliConnStatus.split(";");
+
+function move()
+{
+	get_by_id("id_stat_menu").style.top = 90 + document.documentElement.scrollTop+"px";
+}
+
+$(document).ready(function() 
+{
+	$('#drv_btime').html("&nbsp;&nbsp;"+_firmareDate);
+	$('#drv_uptime').html("&nbsp;&nbsp;"+parseTime(_uptime));
+
+	show_div(false, "id_stat_wl_1");
+	if (c_wlmode==1) //repeater mode
+	{
+		show_div(true, "id_stat_wl_1");
+		if (ApCliConnStatusArray[0] == "Connected")
+		{
+			get_by_id("drv_ssid1").innerHTML = ApCliConnStatusArray[2];
+			get_by_id("drv_bssid1").innerHTML = ApCliConnStatusArray[1];
+			get_by_id("drv_status1").innerHTML = gwl.status3;
+		}
+		else
+		{
+			//get_by_id("drv_ssid1").innerHTML = "";
+			get_by_id("drv_bssid1").innerHTML = "00:00:00:00:00:00"
+			get_by_id("drv_status1").innerHTML = gwl.status6;
+		}
+	}
+	window.onscroll = move;
+});
+</script>
+</head>
+
+<body>
+<div class="container">
+  <div class="title"> <a href="index.htm"><img src="img/logo.gif" /></a> 
+    <script>
+    dw('<input type="button" id="logoff" class="btn_title_logoff title_btn" value="'+pg_title.logoff+'" onclick="logout()" />');</script> 
+  </div>
+  <script>WriteHr();</script> 
+  <!-- end global title -->
+  <div class="content">
+    <div id="man_bg_full">
+      <div id="id_back">
+        <div id="id_back_img"><a href="index.htm"><img class="img_back" src="img/BackButton2.png" /></a></div>
+        <div id="id_back_str">
+			<font color="#000000">
+				<script language="javascript">_T(pg_status.title);</script>
+			</font>
+		</div>
+      </div>
+    </div>
+    <div id="id_stat_menu">
+      <div id="id_stat_menu_wl">
+        <div class="cl_div_wl">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <script type="text/javascript">HomeMainList(wl_menu);</script>
+          </table>
+        </div>
+      </div>
+      <div id="id_stat_menu_net">
+        <div class="cl_div_net">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <script type="text/javascript">HomeMainList(net_menu);</script>
+          </table>
+        </div>
+      </div>
+      <div id="id_stat_menu_man">
+        <div class="cl_div_man">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <script type="text/javascript">HomeMainList(mn_menu);</script>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="id_stat_main"> 
+      <!--system-->
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+          <td class="head_white"><strong>
+            <script language="javascript">_T(pg_status.system);</script>
+            </strong></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="head_white"><script language="javascript">_T(pg_upload.firmver);</script></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="head_white"><script language="javascript">_T(pg_status.uptime);</script></td>
+          <td id="drv_uptime"></td>
+        </tr>
+        <tr>
+          <td class="head_white"><script language="javascript">_T(pg_status.btime);</script></td>
+          <td id="drv_btime"></td>
+        </tr>
+      </table>
+      <hr />
+      <!--wireless-->
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+          <td class="head_white"><strong>
+            <script language="javascript">_T(pg_home.wl);</script>
+            <script type="text/javascript">
+		 	/*if (c_wlmode==1)
+				dw("&nbsp;"+pg_home.cli);
+			else */
+				dw("&nbsp;"+pg_home.ap);
+		  </script> 
+            </strong></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="head_white"><script language="javascript">_T(glb.mode);</script></td>
+          <td><script type="text/javascript">
+			if (c_wlmode==1)
+				dw(pg_home.rep);
+			else
+				dw(pg_home.ap);
+        	</script></td>
+        </tr>
+        <tr>
+          <td class="head_white"><script language="javascript">_T(gwl.band);</script></td>
+          <td id="drv_band0"><script type="text/javascript">
+			if (c_wirelessmode==0)
+				dw(gwl.bg);
+			if (c_wirelessmode==1)
+				dw(gwl.b);
+			if (c_wirelessmode==4)
+				dw(gwl.g);
+			if (c_wirelessmode==7)
+				dw(gwl.gn);
+			if (c_wirelessmode==9)
+				dw(gwl.bgn);
+        	</script></td>
+        </tr>
+        <tr>
+          <td class="head_white"><script language="javascript">_T(gwl.ssid);</script></td>
+          <td id="drv_ssid0"></td>
+        </tr>
+        <tr>
+          <td class="head_white"><script language="javascript">_T(gwl.chan);</script></td>
+          <td id="drv_chan0"></td>
+        </tr>
+        <tr>
+          <td class="head_white"><script language="javascript">_T(gwl.encryption);</script></td>
+          <td id="drv_wep0">
+          <script>
+          	if ((authenticationModeArray[ssid_idx] == "OPEN" ||authenticationModeArray[ssid_idx] == "SHARED" || authenticationModeArray[ssid_idx] == "WEPAUTO") && encryp_type_modeArray[ssid_idx] == "WEP")
+          		dw("WEP");
+          	else if (authenticationModeArray[ssid_idx] == "OPEN" && authenticationModeArray[ssid_idx] == "NONE")
+          		dw(glb.disable);
+          	else
+          		dw(authenticationModeArray[ssid_idx]);
+          </script>
+          </td>
+        </tr>
+        <tr>
+          <td class="head_white"><script language="javascript">_T(gwl.bssid);</script></td>
+          <td id="drv_bssid0"></td>
+        </tr>
+        <tr>
+          <td class="head_white"><script language="javascript">_T(gwl.assoccli);</script></td>
+          <td id="drv_client0">2</td>
+        </tr>
+        <tr class="off">
+          <td class="head_white"><script language="javascript">_T(glb.status);</script></td>
+          <td id="drv_status0"></td>
+        </tr>
+      </table>
+      <hr />
+      <!--apclient-->
+      <span id="id_stat_wl_1" class="off">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+      <tr>
+        <td class="head_white"><strong>
+          <script language="javascript">_T(pg_home.wl);</script>
+          <script type="text/javascript">
+		  	if (c_wlmode==1)
+				dw("&nbsp;"+pg_home.cli);
+		  </script> 
+          </strong></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="head_white"><script language="javascript">_T(gwl.band);</script></td>
+        <td id="drv_band1"><script type="text/javascript">
+			if (c_wirelessmode==0)
+				dw(gwl.bg);
+			if (c_wirelessmode==1)
+				dw(gwl.b);
+			if (c_wirelessmode==4)
+				dw(gwl.g);
+			if (c_wirelessmode==7)
+				dw(gwl.gn);
+			if (c_wirelessmode==9)
+				dw(gwl.bgn);
+        	</script></td>
+      </tr>
+      <tr>
+        <td class="head_white"><script language="javascript">_T(gwl.ssid);</script></td>
+        <td id="drv_ssid1"></td>
+      </tr>
+      <tr>
+        <td class="head_white"><script language="javascript">_T(gwl.encryption);</script></td>
+        <td id="drv_wep1"><SCRIPT>
+        	var v_WLN_ApCliAuthMode = "";
+        	var v_WLN_ApCliEncrypType = "";
+			
+        	if ((v_WLN_ApCliAuthMode == "OPEN" ||v_WLN_ApCliAuthMode == "SHARED" || v_WLN_ApCliAuthMode == "WEPAUTO") && v_WLN_ApCliEncrypType == "WEP")
+          		dw("WEP");
+          	else if (v_WLN_ApCliAuthMode == "OPEN" && v_WLN_ApCliEncrypType == "NONE")
+          		dw(glb.disable);
+          	else
+          		dw(v_WLN_ApCliAuthMode);
+        </script></td>
+      </tr>
+      <tr>
+        <td class="head_white"><script language="javascript">_T(gwl.bssid);</script></td>
+        <td id="drv_bssid1"></td>
+      </tr>
+      <tr>
+        <td class="head_white"><script language="javascript">_T(glb.status);</script></td>
+        <td id="drv_status1"></td>
+      </tr>
+    </table>
+    <hr />
+      </span> 
+      <!--internet-->
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+      <tr>
+        <td class="head_white"><strong>
+          <script language="javascript">_T(pg_home.net);</script>
+          </strong></td>
+        <td></td>
+      </tr><!--
+      <tr>
+        <td class="head_white"><script language="javascript">_T(gnet.aip);</script></td>
+        <td>
+        </td>
+      </tr>-->
+      <tr>
+        <td class="head_white"><script language="javascript">_T(gnet.ipaddr);</script></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="head_white"><script language="javascript">_T(gnet.submask);</script></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="head_white"><script language="javascript">_T(gnet.defgw);</script></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="head_white"><script language="javascript">_T(gnet.dhcp);</script></td>
+        <td><script type="text/javascript">
+        	if ('1'*1 == 1)
+        		dw(pg_lan.svr);
+        	else
+        		dw(glb.disable); </script></td>
+      </tr>
+      <tr>
+        <td class="head_white"><script language="javascript">_T(gnet.macaddr);</script></td>
+        <td></td>
+      </tr>
+    </table>
+    </div>
+  </div>
+  <!-- end .content --></div>
+<!-- end .container -->
+</div>
+</body>
+</html>
+

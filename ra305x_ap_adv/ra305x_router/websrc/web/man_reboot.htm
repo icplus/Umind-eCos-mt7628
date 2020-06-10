@@ -1,0 +1,64 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WiFi-Repeater Web Server</title>
+<link rel="stylesheet" href="style/gl.css" type="text/css">
+<link rel="stylesheet" href="style/common.css" type="text/css">
+<script type="text/javascript" src="js/lang_en.js?v=1529017603"></script>
+<meta http-equiv="pragma" content="no-cache">
+ <meta http-equiv="cache-control" content="no-cache">
+ <meta http-equiv="expires" content="0">
+ 
+<script type="text/javascript" src="js/gl.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript">
+function rebootConfirm(f){
+	if( !confirm(pg_reb.confirm) )	
+		return;
+	
+	$('#CCMD').val(0);
+	f.submit();
+}
+$(document).ready(function() 
+{
+	// fix background heigh
+	InitBgHeigh("man_bg");	
+} 
+) 
+</script>
+</head>
+
+<body>
+<form method=POST name=frmSetup id=tools_misc_form>
+<INPUT type=hidden name="CMD" id="CMD" value="SYS_CONF">
+<INPUT type=hidden name="CCMD" id="CCMD" value="0">
+  <div class="container">
+    <div class="title"> <a href="index.htm"><img src="img/logo.gif" /></a> 
+      <script>
+    dw('<input type="button" id="logoff" class="btn_title_logoff title_btn" value="'+pg_title.logoff+'" onclick="logout()" />');</script> 
+    </div>
+    <script>WriteHr();</script> 
+    <!-- end global title -->
+    <div class="content">
+      <div id="man_bg">
+        <div id="id_back">
+          <div id="id_back_img"><a href="index.htm"><img class="img_back" src="img/BackButton.png" /></a></div>
+          <div id="id_back_str">
+            <script language="javascript">_T(pg_reb.h2);</script>
+          </div>
+        </div>
+        <div id="id_man_main">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td align="center"><script type="text/javascript">document.write('<input class="input_btn_next" type="button" value="'+ pg_reb.but +'"  onClick="rebootConfirm(document.frmSetup)"');</script></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <!-- end .content --></div>
+    <!-- end .container --></div>
+</form>
+</body>
+</html>
+

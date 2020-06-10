@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WiFi-Repeater Web Server</title>
+<link rel="stylesheet" href="style/gl.css" type="text/css">
+<link rel="stylesheet" href="style/setok.css" type="text/css">
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/lang_zhcn.js?v=1529017603"></script>
+<meta http-equiv="pragma" content="no-cache">
+ <meta http-equiv="cache-control" content="no-cache">
+ <meta http-equiv="expires" content="0">
+ 
+<script type="text/javascript" src="js/gl.js"></script>
+<script type="text/javascript">
+var url = "";
+var settp = '0'*1;
+
+function ClickBack()
+{
+	if (url=="")
+		url = MainPage;
+	if (url.indexOf("htm")>=0)
+		GotoWeb(url);
+	else
+		location.href = 'http://'+url;
+}
+
+var sec = 0;
+var step_px = 4;
+var max_px = 400;
+var step_sec = 0;
+function process()
+{
+	sec++;
+	if (sec<100)
+	{
+		get_by_id("id_process_ing").style.width = step_px*sec+"px";
+		get_by_id("id_num").innerHTML = parseInt((step_px*sec/max_px)*100)+"%"
+		setTimeout("process()", step_sec);
+	}
+	else
+	{
+		get_by_id("id_process_ing").style.width = max_px + "px";
+		get_by_id("id_num").innerHTML = "100%"
+		ClickBack();
+	}
+}
+
+$(document).ready(function() 
+{
+	InitBgHeigh("id_setok_bg");	
+	
+	var type1;
+	var type2;
+	type1 = eval("pg_setok.msg"+settp);	
+	type2 = eval("pg_setok.msg"+settp+"_i");
+	get_by_id("id_setok_type").innerHTML = "&nbsp;&nbsp;"+type1;
+	get_by_id("id_setok_type_i").innerHTML = type2;
+	/*
+	if (rip!= undefined)
+		get_by_id("id_setok_type_i2").innerHTML = pg_setok.ip + rip;
+	*/
+	switch (settp)
+	{
+		case 1:
+			step_sec = 300;
+			break;
+		case 2:
+			step_sec = 350;
+			break;
+		case 3:
+			step_sec = 350;
+			break;
+		case 4:
+			step_sec = 100;
+			break;
+		default:
+			break;
+	}
+
+	if (settp>0)
+	{
+		show_div(true, "id_span");
+		setTimeout("process()", step_sec);
+	}
+} 
+) 
+</script>
+</head>
+
+<body>
+<div class="container">
+  <div class="title"> <a href="index.htm"><img src="img/logo.gif" /></a> 
+    <script>
+    dw('<input type="button" id="logoff" class="btn_title_logoff title_btn" value="'+pg_title.logoff+'" onclick="logout()" />');</script> 
+  </div>
+  <script>WriteHr();</script> 
+  <!-- end global title -->
+  <div class="content"> 
+    <div id="id_setok_bg">
+    <div id="id_setok_head">
+      <script language="javascript">_T(pg_setok.head);</script>
+    </div>
+    <div id="id_setok_info">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+          <td><script language="javascript">_T(pg_setok.ok);</script></td>
+          <td><font id="id_setok_type"></font></td>
+        </tr>
+      </table>
+    </div>
+    <div id="id_setok_info_i">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+          <td><font id="id_setok_type_i"></font></td>
+        </tr>
+        <tr>
+          <td><font id="id_setok_type_i2"></font></td>
+        </tr>
+      </table>
+    </div>
+    <span id="id_span" class="off"> <br />
+    <div id="id_process_bg">
+      <div id="id_process_ing"></div>
+      <div id="id_process_num">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td align="center"><font id="id_num"></font></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    </span>
+    <div id="id_setok_foot" class="off">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+          <td align="right"><script type="text/javascript">document.write('<input class="input_btn_back" type="button" value="'+ glb.backs +'"  onClick="ClickBack()">');</script></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+    <!-- end .content --></div>
+  <!-- end .container --></div>
+</body>
+</html>
+

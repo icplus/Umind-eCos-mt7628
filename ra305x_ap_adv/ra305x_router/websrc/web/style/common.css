@@ -1,0 +1,372 @@
+@charset "utf-8";
+
+body {
+	color: #000;
+}
+.head, .head_white {
+	width:40%;
+	font-size:20px;
+	height:40px;
+	vertical-align:middle;
+	position:relative;
+	left: 8px;
+}
+.head {
+	color:#333333;
+}
+.head_white {
+	color:#FFF;
+}
+.footer {
+	vertical-align:middle;
+	text-align:center;
+}
+.submit_btn {
+	color:#FFF;
+	font-size:20px;
+	text-align:center;
+	width:150px;
+	height:45px;
+	
+	border: 3px solid #CCC;
+	background:#F25022;
+	cursor:hand;
+}
+.nomal_btn_en {
+	color:#FFF;
+	font-size:15px;
+	text-align:center;
+	border: 3px solid #CCC;
+	background:#F25022;
+	cursor:hand;
+}
+.nomal_btn_dis {
+	color:#000;
+	font-size:15px;
+	text-align:center;
+	border: 3px solid #CCC;
+	cursor:hand;
+}
+.input_btn, .input_btn_en, .input_btn_dis, .input_text, .option, .input_man_text, .input_lan_text {
+	width:240px;
+	font-size:16px;
+	border:2px solid #CCC;
+}
+.input_btn {
+	color:#000;
+	text-align:center;
+	
+	background-color:#F25022;
+	cursor:hand;
+}
+.input_btn_en {
+	color:#FFF;
+	text-align:center;
+	
+	background-color:#F25022;
+	cursor:hand;
+}
+.input_btn_dis {
+	color:#000;
+	text-align:center;
+	
+	cursor:hand;
+}
+.input_text {
+}
+.option {
+}
+.input_lan_text {
+	color:#8DC63F;
+}
+.input_wl_text {
+	width:100px;
+	font-size:16px;
+	border:1px solid #CCC;
+}
+.input_man_text, .input_man_tz_text {
+	color:#00AEEF;
+}
+.input_man_tz_text {
+	font-size:12px;
+}
+.input_btn_next, .input_btn_cancel, .input_btn_reset, .input_btn_copy, .input_btn_lan, .input_btn_wiz {
+	height: 40px;
+	font-size:16px;
+	color:#FFF;
+	margin:20px;
+	border: 3px solid #FFF;
+	cursor:hand;
+}
+.input_btn_next {
+	width:100px;
+	background-color:#00AEEF;
+}
+.input_btn_cancel {
+	width:100px;
+	background-color:#00AEEF;
+}
+.input_btn_reset {
+	width:150px;
+	background-color:#00AEEF;
+}
+.input_btn_copy {
+	width:200px;
+	background-color:#00AEEF;
+}
+.input_btn_lan {
+	width:100px;
+	background-color:#8DC63F;
+}
+.input_btn_wiz {
+	width:100px;
+	background-color:#17954C;
+}
+.input_btn_wiz_dis {
+	height: 40px;
+	font-size:16px;
+	color:#000;
+	border: 3px solid #CCC;
+	width:100px;
+	margin: 20px;
+}
+#wiz_bg, #lan_bg, #man_bg {
+	position:absolute;
+	top:100px;
+	height:500px;
+	width:900px;
+	margin:0px auto;
+}
+#wiz_bg {
+	background-color:#17954C;
+}
+#lan_bg {
+	background-color:#8DC63F;
+}
+#man_bg {
+	background-color:#00AEEF;
+}
+#man_bg_full {
+	position:absolute;
+	top:100px;
+	height:100%;
+	width:900px;
+	margin:0px auto;
+	/*	background-color:#FCB040;*/
+	background-color:#FFF;
+}
+#id_back {
+	position:absolute;
+	color:#FFF;
+	top:40px;
+	left:200px;
+	width:650px;
+	font-size:24px;
+}
+#id_back_img {
+	position:relative;
+	left:0px;
+	width:80px;
+}
+#id_back_str {
+	position:absolute;
+	left: 80px;
+	top: 5px;
+}
+.img_back {
+	border:none;
+}
+#id_man_main, #id_lan_main, #id_wiz_main {
+	color:#FFF;
+	width:560px;
+	position:absolute;
+	top:120px;
+	left:270px;
+}
+#id_man_foot, #id_lan_foot, #id_wiz_foot {
+	color:#FFF;
+	margin:50px 20px;
+}
+#id_stat_menu {
+	position:relative;
+	top:90px;
+	left:8px;
+	width:200px;
+}
+#id_stat_menu_wl, #id_stat_menu_net, #id_stat_menu_man {
+	border-top-width: 8px;
+	border-top-style: solid;
+	border-top-color: #FFF;
+}
+#id_stat_menu_wl {
+	background-color:#F25022;
+}
+.cl_div_wl {
+	border-color:#F25022;
+}
+#id_stat_menu_net {
+	background-color:#8DC63F;
+}
+.cl_div_net {
+	border-color:#8DC63F;
+}
+#id_stat_menu_man {
+	background-color:#00AEEF;
+}
+.cl_div_man {
+	border-color:#00AEEF;
+}
+.cl_div_wl, .cl_div_net, .cl_div_man {
+	border-left-width:10px;
+	border-left-style:solid;
+	border-top-width: 10px;
+	border-bottom-width: 10px;
+	border-top-style: solid;
+	border-bottom-style: solid;
+}
+#id_stat_main {
+	color:#FFF;
+	position:relative;
+	top:-262px;
+	left:280px;
+	width:620px;
+	background-color:#FCB040;
+}
+.bg_error {
+	background-color:#F00;
+}
+#id_wiz_main_ss_head {
+	background-color:#808080;
+	font-size:14px;
+}
+#id_wiz_main_ss_list {
+	font-size:12px;
+}
+.wlpfth {
+	text-align:center;
+	border-top-style: none;
+	border-right-width: 1px;
+	border-left-width: 1px;
+	border-right-style: solid;
+	border-bottom-style: none;
+	border-left-style: solid;
+	border-right-color: #CCC;
+	border-left-color: #CCC;
+	background-color:#808080;
+	font-size:16px;
+}
+.wlpfti1, .wlpfti2 {
+	border-top-style: none;
+	border-right-width: 1px;
+	border-left-width: 1px;
+	border-bottom-width: 1px;
+	border-right-style: solid;
+	border-bottom-style: solid;
+	border-left-style: solid;
+	border-right-color: #CCC;
+	border-left-color: #CCC;
+	border-bottom-color: #CCC;
+	vertical-align:middle;
+}
+.wlpfti1 {
+	background-color:#E0E0E0;
+}
+.wlpfti2 {
+	background-color:#FFFFFF;
+}
+.wlpftb1, .wlpftb2 {
+	width:100%;
+	font-size:16px;
+	border:1px solid #CCC;
+	text-align:center;
+	cursor:hand;
+}
+.wlpftb1 {
+	color:#FFF;
+	background-color:#17954C;
+}
+.wlpftb2 {
+	color:#000;
+}
+
+.blank_1 {
+	width:30px;
+}
+.blank_2 {
+	width:280px;
+	vertical-align:top;
+}
+.blank_3 {
+	width:50px;
+}
+.blank_4 {
+	width:540px;
+	vertical-align:top;
+}
+.menu_head {
+	font-size:32px;
+	color:#000;
+	height:80px;
+	vertical-align:middle;
+}
+.menu_sel1 {
+	font-size:20px;
+	color:#FFF;
+	background-color:#F25022;
+	height:60px;
+	vertical-align:middle;
+}
+.menu_sel2 {
+	font-size:12px;
+	color:#FFF;
+	background-color:#F25022;
+	vertical-align:middle;
+}
+.menu_nosel1 {
+	font-size:20px;
+	color:#000;
+	background-color:#FFF;
+	vertical-align:middle;
+	cursor:hand;
+}
+.menu_nosel2 {
+	font-size:12px;
+	color:#666;
+	background-color:#FFF;
+	vertical-align:middle;
+}
+#menu ul {
+	list-style-type: none;
+	margin: 0px;
+	padding: 0px;
+}
+#menu {
+	width: 100%;
+}
+#menu ul .menu_sel1, #menu ul .menu_nosel1 {
+	height: 55px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0px;
+	padding-left: 10px;
+}
+#menu ul li {
+	line-height: 26px;
+}
+#id_div_info {
+	width:300px;
+	height:150px;
+	background:#BBB;
+	position:absolute;
+	top:50%;
+	left:50%;
+	margin-left:-150px;
+	margin-top:-100px;
+	z-index:3;
+	FONT-SIZE: 18px;
+	color:#FFF;
+}
+.TouMing {
+	filter:alpha(opacity:20);
+	opacity:0.2;
+}

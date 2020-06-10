@@ -1,0 +1,349 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WiFi-Repeater Web Server</title>
+<script type="text/javascript" src="js/lang_conf.js"></script>
+<script type="text/javascript" src="js/lang_en.js"></script>
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="cache-control" content="no-cache">
+<meta http-equiv="expires" content="0">
+ 
+<script type="text/javascript" src="js/gl.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<style type="text/css">
+body {
+	font: 100%/1.4 Verdana, Arial, Helvetica, sans-serif;
+	background:#0E6D38;
+	margin:0px;
+	padding:0px;
+}
+.on {
+	display:inline;
+}
+.off {
+	display:none;
+}
+.login {
+	background:#0E6D38;
+}
+.login_top {
+	height:150px;
+}
+.login_block {
+	width:25%;
+}
+.login_main {
+	width:50%;
+}
+.login_tit {
+	width:30%;
+	font:Calibri;
+	font-size:20px;
+	color:#FFF;
+}
+.login_text, #lang_select {
+	width:220px;
+	font-size:16px;
+}
+#lang_select {
+}
+.login_btn {
+	background:#10A151;
+	color:#FFF;
+	font-size:20px;
+	text-align:center;
+	width:150px;
+	border: 2px solid #FFF;
+	cursor:hand;
+}
+#errorinfo {
+	font-size:14px;
+	color:#F00;
+}
+</style>
+<script type="text/javascript">
+var user_lang= "<% CGI_CFG_GET(CFG_SYS_Language); %>";
+var settp = '0'*1;
+
+var Base64 = {
+ 
+    // private property
+    _keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+ 
+    // public method for encoding
+    encode : function (input) {
+        var output = "";
+        var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+        var i = 0;
+ 
+        input = Base64._utf8_encode(input);
+ 
+        while (i < input.length) {
+ 
+            chr1 = input.charCodeAt(i++);
+            chr2 = input.charCodeAt(i++);
+            chr3 = input.charCodeAt(i++);
+ 
+            enc1 = chr1 >> 2;
+            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+            enc4 = chr3 & 63;
+ 
+            if (isNaN(chr2)) {
+                enc3 = enc4 = 64;
+            } else if (isNaN(chr3)) {
+                enc4 = 64;
+            }
+ 
+            output = output +
+            this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) +
+            this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+ 
+        }
+ 
+        return output;
+    },
+ 
+    // private method for UTF-8 encoding
+    _utf8_encode : function (string) {
+        string = string.replace(/\r\n/g,"\n");
+        var utftext = "";
+ 
+        for (var n = 0; n < string.length; n++) {
+ 
+            var c = string.charCodeAt(n);
+ 
+            if (c < 128) {
+                utftext += String.fromCharCode(c);
+            }
+            else if((c > 127) && (c < 2048)) {
+                utftext += String.fromCharCode((c >> 6) | 192);
+                utftext += String.fromCharCode((c & 63) | 128);
+            }
+            else {
+                utftext += String.fromCharCode((c >> 12) | 224);
+                utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+                utftext += String.fromCharCode((c & 63) | 128);
+            }
+ 
+        }
+ 
+        return utftext;
+    },
+ 
+    // private method for UTF-8 decoding
+    _utf8_decode : function (utftext) {
+        var string = "";
+        var i = 0;
+        var c = c1 = c2 = 0;
+ 
+        while ( i < utftext.length ) {
+ 
+            c = utftext.charCodeAt(i);
+ 
+            if (c < 128) {
+                string += String.fromCharCode(c);
+                i++;
+            }
+            else if((c > 191) && (c < 224)) {
+                c2 = utftext.charCodeAt(i+1);
+                string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+                i += 2;
+            }
+            else {
+                c2 = utftext.charCodeAt(i+1);
+                c3 = utftext.charCodeAt(i+2);
+                string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+                i += 3;
+            }
+ 
+        }
+ 
+        return string;
+    }
+ 
+}
+function CheckValue()
+{
+	var user = $("#username");
+	var pass = $("#password");
+	$("#errorinfo").html("");
+	if (user.val().length==0)
+	{
+		user.focus();
+		return false;
+	}
+	if (pass.val().length==0)
+	{
+		$("#errorinfo").html(pg_login.passempty);
+		pass.focus();
+		return false;
+	}
+	if (includeSpace(user.val()))
+	{
+		$("#errorinfo").html(pg_login.userformat);
+		user.focus();
+		return false;
+	}
+	if (includeSpace(pass.val()))
+	{
+		$("#errorinfo").html(pg_login.passformat);
+		pass.focus();
+		return false;
+	}
+	return true;
+}
+function getsec(str)
+{ 
+   var str1=str.substring(1,str.length)*1; 
+   var str2=str.substring(0,1); 
+   if (str2=="s")
+   { 
+        return str1*1000; 
+   }
+   else if (str2=="h")
+   { 
+       return str1*60*60*1000; 
+   }
+   else if (str2=="d")
+   { 
+       return str1*24*60*60*1000; 
+   } 
+} 
+function setCookie(name,value,time)
+{ 
+    var strsec = getsec(time); 
+    var exp = new Date(); 
+    exp.setTime(exp.getTime() + strsec*1);
+	//创建一个cookie
+    document.cookie = name + "="+ value + ";expires=" + exp.toGMTString(); 
+} 
+function PCSubWin()
+{
+	if(CheckValue())
+	{
+		var username = $("#username").val();	
+		var password = $("#password").val();	
+		var auth = "Basic "+ Base64.encode(username+":"+password);
+		setCookie("Authorization",auth,"h1");
+		//document.cookie = "Authorization="+auth+";path=/";
+		location.href = MainPage;
+	}
+}
+function PCWin(event)
+{	//13既是Enter
+	if (event.keyCode == 13)
+	{
+		PCSubWin();
+	}
+}
+
+function submitLang(f)
+{
+	ajax_form('login.htm', 'login.htm', "CMD=SYS_CONF&CCMD=7&lang_select="+$("#lang_select").val());
+}
+$(document).ready(function(){
+	logout2();
+	$("#username").val('')
+	$("#password").val('');
+	$("#username").focus();
+	
+	if (settp == 10) //login error
+	{
+		$("#errorinfo").html(pg_login.logerr);
+	}
+	else if (settp == 11)
+	{
+		$("#errorinfo").html(pg_login.logtimeout);
+	}
+});
+</script>
+</head>
+
+<body class="login" onkeypress="PCWin(event)">
+<form method=POST name=frmSetup id=tools_misc_form>
+<INPUT type=hidden name="CMD" id="CMD" value="SYS_CONF">
+<INPUT type=hidden name="CCMD" id="CCMD" value="7">
+<INPUT type=hidden name="GO" id="GO" value="login.htm">
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td class="login_top">&nbsp;</td>
+  </tr>
+</table>
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td class="login_block">&nbsp;</td>
+    <td class="login_main"><table width="800px" border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td width="40%" align="center"><img src="img/login.jpg" /></td>
+          <td width="60%"><!-- Login -->
+            
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td class="login_tit"><tt>
+                  <script language="javascript">_T(pg_login.user);</script>
+                  </tt></td>
+                <td><input class="login_text" type="text" id="username" name="username" maxlength="30" /></td>
+              </tr>
+              <tr>
+                <td height="20px"></td>
+                <td height="20px"></td>
+              </tr>
+              <tr>
+                <td class="login_tit"><tt>
+                  <script language="javascript">_T(pg_login.pass);</script>
+                  </tt></td>
+                <td><input class="login_text" type="password" id="password" name="password" maxlength="30" /></td>
+              </tr>
+              <tr>
+                <td height="10px"></td>
+                <td height="10px"></td>
+              </tr>
+            </table>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td height="40px;" valign="middle"><font id="errorinfo"></font><img class="off" id="loginimg" src="img/login_load.gif" /></td>
+              </tr>
+            </table>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td class="login_tit">
+					<tt>
+						<script language="javascript">_T(pg_login.lang);</script>
+					</tt>
+				</td>
+                <td>
+					<select name="lang_select" id="lang_select" onchange="submitLang(this.form)">
+						<script>
+						var i;
+						for(i=0;i<user_lang_array.length;i++)
+						{
+							if (user_lang_array[i].value==user_lang)
+								document.write('<option value="'+user_lang_array[i].value+'" selected>'+user_lang_array[i].name+'</option>');
+							else
+								document.write('<option value="'+user_lang_array[i].value+'">'+user_lang_array[i].name+'</option>');
+						}
+						</script>
+					</select>
+				</td>
+              </tr>
+            </table>
+            <br />
+            <br />
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td align="center"><script type="text/javascript">document.write('<input class="login_btn" type="button" value="'+ pg_login.btnsub +'" name="login" id="login" onclick="PCSubWin()" />');</script></td>
+              </tr>
+            </table>
+            
+            <!-- Login --></td>
+        </tr>
+      </table></td>
+    <td class="login_block">&nbsp;</td>
+  </tr>
+</table>
+</form>
+</body>
+</html>
+

@@ -1,0 +1,774 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WiFi-Repeater Web Server</title>
+<link rel="stylesheet" href="style/gl.css" type="text/css">
+<link rel="stylesheet" href="style/common.css" type="text/css">
+<script type="text/javascript" src="js/lang_en.js?v=1529017603"></script>
+<meta http-equiv="pragma" content="no-cache">
+ <meta http-equiv="cache-control" content="no-cache">
+ <meta http-equiv="expires" content="0">
+ 
+<script type="text/javascript" src="js/gl.js"></script>
+<script type="text/javascript" src="js/wl.js"></script>
+<script type="text/javascript" src="js/set.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<style type="text/css">  
+#loginimg {
+ height: 20px;
+ border: 2px solid #FFF;
+}
+#bar_span {
+	display:block;
+	width: 0%;
+	height:20px;
+	background: green;
+}
+table.dataGrid{
+	width:100%;
+	margin:0;
+	border-collapse:collapse;
+	border:1px solid #E4E4E4;
+	text-align:center;
+}
+table.dataGrid tr{
+	background:#FEFEFE;
+	border-bottom:1px solid #E4E4E4;
+}
+table.dataGrid td{
+	height:40px;
+	color:#000000;
+	border:1px solid #E4E4E4;
+	background:#FEFEFE;
+	vertical-align:middle;
+	white-space:pre;
+}
+.wiz_main_ss_list_1, .wiz_main_ss_list_2, .wiz_main_ss_list_3{
+	line-height:25px;
+	color:#000;
+}
+.wiz_main_ss_list_1 {
+	background-color:#E0E0E0;
+	cursor:hand;
+}
+.wiz_main_ss_list_2 {
+	background-color:#FFFFFF;
+	cursor:hand;
+}
+.wiz_main_ss_list_3 {
+	background-color:#C0C0C0;
+	cursor:hand;
+}
+</style>
+<script type="text/javascript">
+
+<%
+CGI_MAP(opmode, CFG_SYS_OPMODE);
+%>
+addCfg('c_SYS_LANGUAGE',0x01190100,'0');
+addCfg('WlMode',0x011a0100,'0');
+addCfg('c_WLN_SSID1',0x043c0200,'WiFi-Repeater');
+addCfg('AutoChannelSelect2',0x04370100,'3');
+addCfg('szChannel',0x04070100,'1');
+addCfg('SSIDIndexTemp',0x04e90100,'0');
+addCfg('IEEE8021X2',0x04930200,'0;0;0;0');
+addCfg('AuthMode',0x04960200,'OPEN;OPEN;OPEN;OPEN');
+addCfg('EncrypType',0x04490200,'NONE;NONE;NONE;NONE');
+addCfg('WepDefaultKey2',0x043a0200,'1;1;1;1');
+addCfg('WepKeyLength2',0x04e50200,'0;0;0;0');
+addCfg('Key1TypeTemp',0x049b0200,'0;0;0;0');
+addCfg('Key1Str1Temp',0x049c0200,'11111');
+addCfg('WPAPSK1Temp',0x049a0200,'12345678');
+addCfg('WscConfMode',0x04860100,'7');
+addCfg('DHCPD_EN',0x02020100,'1');
+addCfg('c_bssid_num',0x04360100,'1');
+addCfg('c_ht_extcha',0x04470100,'1');
+addCfg('c_hw_bw',0x04410100,'1');
+addCfg('c_WLN_ApCliEnable',0x04d40100,'1');
+addCfg('c_WLN_ApCliSsid',0x04df0200,'');
+addCfg('c_WLN_ApCliAuthMode',0x04d60200,'');
+addCfg('c_WLN_ApCliEncrypType',0x04d70200,'');
+addCfg('c_WLN_ApCliKey1Type',0x04d80100,'0');
+addCfg('c_WLN_ApCliKey1Str',0x04d90200,'');
+addCfg('c_WLN_ApCliDefaultKeyID',0x04dd0100,'0');
+addCfg('c_WLN_ApCliWPAPSK',0x04de0200,'');
+addCfg('c_WLN_HT_BSSCoexistence',0x04e40100,'0');
+addCfg('WscAuthType2',0x04900100,'1');
+addCfg('WscEncrypType2',0x04910100,'1');
+addCfg('WscConfigured2',0x04870100,'2');
+addCfg('WscNewKey2',0x04920200,'scaptest');
+
+var regDomain = "1"*1;
+var channel_index  = "Auto Select"*1; 
+var ssid_idx = "0"*1;
+var authenticationMode = "OPEN;OPEN;OPEN;OPEN";
+var authenticationModeArray = authenticationMode.split(";");
+var wln_wpapsk = "12345678";
+var wln_wpapskArray = wln_wpapsk.split(";");
+var _user_lang = "0"*1;
+var v_ssid1 = "<% CGI_CFG_GET(CFG_WLN_SSID1); %>";
+
+var sel_idx_new = -1;
+var sel_idx_old = -1;
+function trMouseOver(idx)
+{
+	get_by_id("id_list_tr"+idx).className = "wiz_main_ss_list_3"
+}
+
+function trMouseOut(idx)
+{
+	if (idx==sel_idx_new || idx<0)
+		return;
+	if (idx%2)
+		get_by_id("id_list_tr"+idx).className = "wiz_main_ss_list_1";
+	else
+		get_by_id("id_list_tr"+idx).className = "wiz_main_ss_list_2";
+}
+
+function trOnclick(idx)
+{
+	selAP(idx);
+}
+var APList = new Array();
+
+function delAllList()
+{
+	$("#WDSTbl tr:not(:first)").html("");
+	APList = [];
+}
+function prePro(data)
+{
+	if (data.length % 2) return '';
+	var tmp='';
+	
+	for(i=0;i<data.length;i+=2)
+	{
+		tmp += '%' + data.charAt(i) + data.charAt(i+1);	
+	}
+	var objdata = tmp.substring(3);
+	return objdata;
+}
+/*
+function addR(id)
+{
+	var arrSorted = arrSort(APList);
+	var newSSID;
+	for(id; id < arrSorted.length/5; id++){
+		var ssid_str = arrSorted[id*5+1] ?(arrSorted[id*5+1]).replace(/[\\]/g, "\\").replace(/[\"]/g, "\"").replace(/[\']/g, "\'"): "隐藏网络";
+		if(/^0x/.test(ssid_str))
+        {
+            var textSSID = prePro(ssid_str);
+            try
+            {
+                newSSID = decodeURI(textSSID);
+            }
+            catch(e)
+            {
+				newSSID = ssid_str;
+            }
+        }
+		else
+		{
+			newSSID = ssid_str;
+		}
+	}
+	
+	var i_signal = '';
+	if (APList[id*5+4]*1 > 10)
+		i_signal += '<img src="img/s1.gif" width="4" height="3">'
+	else
+		i_signal += '<img src="img/s2.gif" width="4" height="3">'
+	if (APList[id*5+4]*1 > 20)
+		i_signal += '<img src="img/s1.gif" width="4" height="6">'
+	else
+		i_signal += '<img src="img/s2.gif" width="4" height="6">'
+	if (APList[id*5+4]*1 > 30)
+		i_signal += '<img src="img/s1.gif" width="4" height="9">'
+	else
+		i_signal += '<img src="img/s2.gif" width="4" height="9">'
+	if (APList[id*5+4]*1 > 40)
+		i_signal += '<img src="img/s1.gif" width="4" height="12">'
+	else
+		i_signal += '<img src="img/s2.gif" width="4" height="12">'
+	if (APList[id*5+4]*1 > 50)
+		i_signal += '<img src="img/s1.gif" width="4" height="15">'
+	else
+		i_signal += '<img src="img/s2.gif" width="4" height="15">'
+	var diy_encry;
+	if (APList[id*5+3] == "NONE")
+		diy_encry = APList[id*5+3];
+	else
+		diy_encry = APList[id*5+3].split("/")[0];
+	var trClass;
+	
+	if (id%2)
+		trClass = 'wiz_main_ss_list_1'
+	else
+		trClass = 'wiz_main_ss_list_2'
+	
+	var newRow = '<tr id="id_list_tr'+id+'" class="'+trClass+'" onmouseover="trMouseOver('+id+')" onmouseout="trMouseOut('+id+')" onclick="trOnclick('+id+')">'+
+					'<td style="text-align: center; padding: 0px;" width="45%">'+newSSID+'</td>'+
+					'<td style="text-align: center; padding: 0px;" width="10%">'+APList[id*5+0]+'</td>'+
+					'<td style="text-align: center; padding: 0px;" width="25%">'+diy_encry+'</td>'+
+					'<td style="text-align: center; padding: 0px;" width="10%">'+i_signal+'</td>'+
+					'<td style="text-align: center; padding: 0px;" width="10%">'+
+					'<input type="radio" name="select" value="sel'+id+'" onclick="selAP('+id+')"></td>'+
+				 '</tr>';
+	$('#WDSTbl tr:last').after(newRow);
+}*/
+function APEntry(id, ssid, channel, security, encry, ExtChan, signal)
+{
+	this.id = id;
+	this.ssid = ssid;
+	this.channel = channel;
+	this.security = security;
+	this.encry = encry;
+	this.ExtChan = ExtChan;
+	this.signal = signal;
+}
+
+function trim(str){   
+    str = str.replace(/^(\s|\u00A0)+/,'');   
+    for(var i=str.length-1; i>=0; i--){   
+        if(/\S/.test(str.charAt(i))){   
+            str = str.substring(0, i+1);   
+            break;   
+        }   
+    }   
+    return str;   
+}
+
+function LoadJason()
+{	
+
+
+/*
+	$.ajax({
+		type:'get',
+		url:'live_get_site_survey.htm',
+		cache: false,
+		data: 'rd='+Math.random(),
+		success:function(data){
+			//var jData = eval("("+data+")");
+			var jData = eval(data);
+			$('#loading').hide();
+			if (jData.status == 'success')
+			{
+				delAllList();
+				var n=0;
+				$.each(jData.list, function(i, item) {
+				if (item.ssid){
+					APList[n] = new APEntry(n, item.ssid, item.channel, item.security, item.encry, item.ExtChan, item.signal);
+					addR(n);
+					n++;
+				}
+				});
+			}
+			else
+			{
+				alert("[Error] "+"Code:" + jData.code);
+			}
+		},
+		error:function(XMLHttpRequest, textStatus, errorThrown) {
+			//location.href = "http://"+DefaultIP; 
+		}
+	});
+	*/
+	var wifiStr=document.getElementById("scanResult").value.toString();
+	console.log(wifiStr);
+	if(wifiStr == "" || wifiStr.length < 126 || wifiStr == null){
+		document.getElementById("div-wifiList").innerHTML = "未扫描到周围的WIFI，请刷新重试！";
+		return;
+	}else{
+		$('#loading').hide();
+		delAllList();
+		var IOfCh = wifiStr.indexOf("Ch")-wifiStr.indexOf("Ch"); /*信道*/ /*0*/
+		var IOfSSID = wifiStr.indexOf("SSID")-wifiStr.indexOf("Ch"); /*ssid 4*/
+		var IOfBSSID = wifiStr.indexOf("BSSID")-wifiStr.indexOf("Ch"); /*Mac地址 69*/
+		var IOfSecurity = wifiStr.indexOf("Security")-wifiStr.indexOf("Ch"); /*加密方式 89*/
+		var IOfSiganl = wifiStr.indexOf("Siganl")-wifiStr.indexOf("Ch"); /*信号强度 112*/
+		var IOfWmode = wifiStr.indexOf("W-Mode")-wifiStr.indexOf("Ch");
+		var IOfExtchan = wifiStr.indexOf("ExtCH")-wifiStr.indexOf("Ch");
+		console.log(wifiStr.indexOf("ExtCH"));
+		
+		var hangLength = 123+wifiStr.indexOf("Ch")-1;
+		var newStr = wifiStr.substring(127,wifiStr.length);
+		var hang = (newStr.length)/hangLength;
+		
+		var i=0;
+		for(i=0;i<hang;i++){
+			APList[i*5+0] = trim(newStr.substring(IOfCh+hangLength*i,IOfSSID+hangLength*i));
+			APList[i*5+1] = trim(newStr.substring(IOfSSID+hangLength*i,IOfBSSID+hangLength*i));
+			APList[i*5+2] = trim(newStr.substring(IOfBSSID+hangLength*i,IOfBSSID+hangLength*i+17));
+			APList[i*5+3] = trim(newStr.substring(IOfSecurity+hangLength*i,IOfSiganl+hangLength*i));
+			APList[i*5+4] = trim(newStr.substring(IOfSiganl+hangLength*i,IOfSiganl+hangLength*i+3));
+			APList[i*5+5] = trim(newStr.substring(IOfWmode+hangLength*i,IOfExtchan+hangLength*i));
+			APList[i*5+6] = trim(newStr.substring(IOfExtchan+hangLength*i,IOfExtchan+hangLength*i+5));
+			//addR(i);
+		}
+	}
+	var arrSorted = arrSort(APList);
+	var newSSID;
+	for(id = 0; id < arrSorted.length/5; id++){
+		var ssid_str = arrSorted[id*5+1] ?(arrSorted[id*5+1]).replace(/[\\]/g, "\\").replace(/[\"]/g, "\"").replace(/[\']/g, "\'"): "隐藏网络";
+		if(/^0x/.test(ssid_str))
+        {
+            var textSSID = prePro(ssid_str);
+            try
+            {
+                newSSID = decodeURI(textSSID);
+            }
+            catch(e)
+            {
+				newSSID = ssid_str;
+            }
+        }
+		else
+		{
+			newSSID = ssid_str;
+		}
+	var diy_encry;
+	if (arrSorted[id*5+3] == "NONE")
+	{
+		diy_encry = arrSorted[id*5+3];
+	}
+	else
+	{
+		diy_encry = arrSorted[id*5+3].substring(0, arrSorted[id*5+3].indexOf('/'));
+	}
+	
+	var i_signal = '';
+	if (arrSorted[id*5+4]*1 > 10)
+		i_signal += '<img src="img/s1.gif" width="4" height="3">'
+	else
+		i_signal += '<img src="img/s2.gif" width="4" height="3">'
+	if (arrSorted[id*5+4]*1 > 20)
+		i_signal += '<img src="img/s1.gif" width="4" height="6">'
+	else
+		i_signal += '<img src="img/s2.gif" width="4" height="6">'
+	if (arrSorted[id*5+4]*1 > 30)
+		i_signal += '<img src="img/s1.gif" width="4" height="9">'
+	else
+		i_signal += '<img src="img/s2.gif" width="4" height="9">'
+	if (arrSorted[id*5+4]*1 > 40)
+		i_signal += '<img src="img/s1.gif" width="4" height="12">'
+	else
+		i_signal += '<img src="img/s2.gif" width="4" height="12">'
+	if (arrSorted[id*5+4]*1 > 50)
+		i_signal += '<img src="img/s1.gif" width="4" height="15">'
+	else
+		i_signal += '<img src="img/s2.gif" width="4" height="15">'
+	
+	var trClass;
+	
+	if (id%2)
+		trClass = 'wiz_main_ss_list_1'
+	else
+		trClass = 'wiz_main_ss_list_2'
+	
+	var newRow = '<tr id="id_list_tr'+id+'" class="'+trClass+'" onmouseover="trMouseOver('+id+')" onmouseout="trMouseOut('+id+')" onclick="trOnclick('+id+')">'+
+					'<td style="text-align: center; padding: 0px;" width="45%">'+newSSID+'</td>'+
+					'<td style="text-align: center; padding: 0px;" width="10%">'+arrSorted[id*5+0]+'</td>'+
+					'<td style="text-align: center; padding: 0px;" width="25%">'+diy_encry+'</td>'+
+					'<td style="text-align: center; padding: 0px;" width="10%">'+i_signal+'</td>'+
+					'<td style="text-align: center; padding: 0px;" width="10%">'+
+					'<input type="radio" name="select" value="sel'+id+'" onclick="selAP('+id+')"></td>'+
+				 '</tr>';
+	$('#WDSTbl tr:last').after(newRow);
+	}
+}
+
+var gSelAPId = 0;
+function selAP(id)
+{
+	gSelAPId = id;
+	sel_idx_new = id;
+	trMouseOut(sel_idx_old);
+	trMouseOver(sel_idx_new);
+	sel_idx_old = id;
+	
+	$('#id_wiz_key').hide();
+	$('#id_apply').attr('class','input_btn_wiz');
+	$('#id_apply').removeAttr("disabled");
+	$('#id_wiz_repssid').show();
+	$('#id_td_conto').html(APList[id*5+1]);
+	$("#wl_rep_ssid").val(APList[id*5+1]+"_Ext");
+	
+	document.getElementsByName("select")[id+1].checked = true;
+	$('#select').val("sel"+id);
+	$('#wl_ssid').val(APList[id*5+1]);
+	$('#wl_channel').val(APList[id*5+0]);
+	$('#wl_channelExt').val(APList[id*5+6]);
+	var diy_encry1;
+	if (APList[id*5+3] == "NONE")
+	{
+		diy_encry1 = APList[id*5+3];
+	}
+	else
+	{
+		diy_encry1 = APList[id*5+3].split("/")[0];
+	}
+	$('#sel_encrypt').val(diy_encry1);
+	var aesAndtkip = APList[id*5+3].split("/")[1];
+	$('#sel_wpa_tkip_aes').val(aesAndtkip);
+	$('#sel_wpa2_tkip_aes').val(aesAndtkip);
+		
+	if (APList[id*5+3] =='NONE')
+	{
+		$('#id_wiz_key').hide();
+	}
+	else
+	{
+		$('#id_wiz_key').show();
+	}
+}
+function RepRefresh()
+{
+	PromptMsg("errorinfo", glb.nul);
+	$('#id_apply').attr('class','input_btn_wiz_dis');
+	$("#id_apply").attr("disabled","disabled")
+	$('#id_wiz_repssid').hide();
+	$('#id_wiz_key').hide();
+	
+	$('#loading').show();
+	delAllList();
+	LoadJason()
+}
+function bgRefresh(heigh)
+{
+	$("#wiz_bg").height(heigh);
+}
+var setp = 1;
+function SetProgress(ress) {
+	if (ress){
+		$("#bar_span").css("width", String(ress) + "%");    
+		$("#bar_span").html(String(ress) + "%")          
+	}
+}
+function doProgress() {
+	if (setp <= 100) {
+		setTimeout("doProgress()", 150);
+		SetProgress(setp);	
+		setp++;
+	}
+	else
+	{
+		callBack()
+	}
+}
+function callBack()
+{
+	$('#id_div_info').show();
+	$('#id_wiz_main').addClass("TouMing");
+}
+function CheckValue(f)
+{
+	PromptMsg("errorinfo", glb.nul);
+
+	if (get_by_id("wl_ssid").value == "")
+	{
+		PromptMsg("errorinfo", pg_wl_bs.ssidNul);
+		return false;
+	}
+	if (get_by_id("wl_rep_ssid").value == "")
+	{
+		get_by_id("wl_rep_ssid").focus();
+		PromptMsg("errorinfo", pg_wl_bs.ssidNul);
+		return false;
+	}
+	
+	setCfg('c_SYS_LANGUAGE', _user_lang);
+	//setCfg('WlMode', '1'); //Repeater Mode
+	setCfg("opmode","3");
+	setCfg('c_WLN_ApCliSsid', $('#wl_ssid').val()); // apclient SSID
+	setCfg('c_WLN_SSID1', $('#wl_rep_ssid').val()); // AP SSID
+
+	var method = get_by_id("sel_encrypt").value;
+	if (method == 'NONE')
+	{
+		setCfg('c_WLN_ApCliAuthMode', 'OPEN');
+		setCfg('c_WLN_ApCliEncrypType', 'NONE');
+		
+		setCfg('AuthMode', 'OPEN;OPEN;OPEN;OPEN');
+		setCfg('EncrypType', 'NONE;NONE;NONE;NONE');
+		setCfg('WscAuthType2', '1');
+		setCfg('WscEncrypType2', '1');
+		setCfg('WscConfigured2', '2');
+	}
+	else if(method == 'WEP')
+	{
+		if (checkWepKey(get_by_id("web_pskValue")) != true)
+		{
+			get_by_id("web_pskValue").value='';
+			get_by_id("web_pskValue").focus();
+			PromptMsg("errorinfo", pg_wl_bs.key_wep);
+			return false;
+		}
+		setCfg('c_WLN_ApCliAuthMode', 'OPEN');
+		setCfg('AuthMode', 'OPEN;OPEN;OPEN;OPEN');
+		setCfg('c_WLN_ApCliEncrypType', 'WEP');
+		setCfg('EncrypType','WEP;WEP;WEP;WEP');
+		setCfg('c_WLN_ApCliDefaultKeyID', "1");
+		setCfg('WepDefaultKey2', "1;1;1;1");
+		setCfg('WscAuthType2', '2');
+		setCfg('WscEncrypType2', '2');
+		setCfg('WscConfigured2', '2');
+		if (get_by_id("web_pskValue").value.length == 5 || get_by_id("web_pskValue").value.length == 13)
+		{
+			setCfg('c_WLN_ApCliKey1Type', '1');
+			setCfg('c_WLN_ApCliKey1Str', $('#web_pskValue').val());
+			setCfg('Key1TypeTemp', '1');
+			setCfg('Key1Str1Temp', $('#web_pskValue').val());
+		}
+		else if (get_by_id("web_pskValue").value.length == 5 || get_by_id("web_pskValue").value.length == 13)
+		{
+			setCfg('c_WLN_ApCliKey1Type', '0');
+			setCfg('c_WLN_ApCliKey1Str', $('#web_pskValue').val());
+			setCfg('Key1TypeTemp', '0');
+			setCfg('Key1Str1Temp', $('#web_pskValue').val());
+		}
+	}
+	else if (method.indexOf("WPA2")!=-1)
+	{
+		if (checkWpaPsk(get_by_id("web_pskValue"))!= true)
+			return false;
+		if (get_by_id("sel_wpa2_tkip_aes").value.indexOf("AES")!=-1)
+		{
+			setCfg('c_WLN_ApCliEncrypType', 'AES');
+			setCfg('EncrypType','AES;AES;AES;AES');
+			setCfg('WscEncrypType2', '8');
+		}
+		else if (get_by_id("sel_wpa2_tkip_aes").value.indexOf("TKIP")!=-1)
+		{
+			setCfg('c_WLN_ApCliEncrypType', 'TKIP');
+			setCfg('EncrypType', 'TKIP;TKIP;TKIP;TKIP');
+			setCfg('WscEncrypType2', '4');
+		}
+		else
+		{
+			PromptMsg("errorinfo", pg_wiz.err2);
+			return false;
+		}
+
+		setCfg('c_WLN_ApCliAuthMode', 'WPA2PSK');
+		setCfg('AuthMode', 'WPA2PSK;WPA2PSK;WPA2PSK;WPA2PSK');
+		setCfg('c_WLN_ApCliWPAPSK', $('#web_pskValue').val());
+		setCfg('WPAPSK1Temp', $('#web_pskValue').val());
+		setCfg('c_WLN_ApCliDefaultKeyID', "2");
+		setCfg('WepDefaultKey2', "2;2;2;2");
+		setCfg('WscAuthType2', '32');
+		setCfg('WscConfigured2', '2');
+		setCfg('WscNewKey2', $('#web_pskValue').val());
+	}
+	else if (method.indexOf("WPA")!=-1)
+	{
+		if (checkWpaPsk(get_by_id("web_pskValue"))!= true)
+			return false;
+		if (get_by_id("sel_wpa_tkip_aes").value.indexOf("AES")!=-1)
+		{
+			setCfg('c_WLN_ApCliEncrypType', 'AES');
+			setCfg('EncrypType','AES;AES;AES;AES');
+			setCfg('WscEncrypType2', '8');
+		}
+		else if (get_by_id("sel_wpa_tkip_aes").value.indexOf("TKIP")!=-1)
+		{
+			setCfg('c_WLN_ApCliEncrypType', 'TKIP');
+			setCfg('EncrypType', 'TKIP;TKIP;TKIP;TKIP');
+			setCfg('WscEncrypType2', '4');
+		}
+		else
+		{
+			PromptMsg("errorinfo", pg_wiz.err2);
+			return false;
+		}
+		
+		setCfg('c_WLN_ApCliAuthMode', 'WPAPSK');
+		setCfg('AuthMode', 'WPAPSK;WPAPSK;WPAPSK;WPAPSK');
+		setCfg('c_WLN_ApCliWPAPSK', $('#web_pskValue').val());
+		setCfg('WPAPSK1Temp', $('#web_pskValue').val());
+		setCfg('c_WLN_ApCliDefaultKeyID', "2");
+		setCfg('WepDefaultKey2', "2;2;2;2");
+		setCfg('WscAuthType2', '2');
+		setCfg('WscConfigured2', '2');
+		setCfg('WscNewKey2', $('#web_pskValue').val());
+	}
+	else
+	{
+		PromptMsg("errorinfo", pg_wiz.err1);
+		return false;
+	}
+	
+	setCfg('IEEE8021X2',"0;0;0;0");
+	//setCfg('WscConfMode', '0'); //disable WPS	
+	//setCfg('DHCPD_EN', '0'); //disable DHCP Server
+	setCfg('c_bssid_num', '1');
+	setCfg('c_WLN_ApCliEnable', '1');
+	setCfg('AutoChannelSelect2', '0');
+	setCfg('szChannel', $('#wl_channel').val());
+
+	if ($('#wl_channelExt').val()=="ABOVE")
+	{
+		setCfg('c_ht_extcha', '1');
+		setCfg('c_hw_bw', '1');
+	}
+	else if ($('#wl_channelExt').val()=="BELOW")
+	{
+		setCfg('c_ht_extcha', '0');
+		setCfg('c_hw_bw', '1');
+	}
+	else // NONE
+	{
+		setCfg('c_ht_extcha', '0');
+		setCfg('c_hw_bw', '0');
+	}
+	
+	form2Cfg(f);
+	$('#loginimg').show();
+	//$('#id_div_info').show();
+	//$('#id_wiz_main').addClass("TouMing");
+	//ajax_form_nobreak('wiz_rep.htm', SetokPage, ajax_data(f, "WIZ_REP", SetokPage));
+	setTimeout("doProgress()", 500)
+	$.ajax({
+		type:'post',
+		url:'wiz_rep.htm',
+		cache: false,
+		data: ajax_data(f, "WIZ_REP", SetokPage)+'&rd='+Math.random(),
+		success:function(){
+			
+		},
+		error:function(XMLHttpRequest, textStatus, errorThrown) {
+			//location.href = "http://"+DefaultIP; 
+		}
+	});
+}
+
+function divClose()
+{
+	setp = 0;
+	SetProgress(setp);	
+	$('#loginimg').hide();
+	$('#id_div_info').hide();
+	$('#id_wiz_main').removeClass("TouMing");
+	GotoWeb('index.htm');
+}
+
+$(document).ready(function() 
+{
+	// fix background heigh
+	InitBgHeigh("wiz_bg");	
+	
+	LoadJason();
+} 
+) 
+</script>
+</head>
+
+<body>
+<form name=WIZ_REP>
+<input type="hidden" id="scanResult" value="<% CGI_GET_SCAN_RESULT();%>">
+<input type="hidden" name="select" id="select" value="" />
+<input type="hidden" name="wl_ssid" id="wl_ssid" value="" />
+<input type="hidden" name="wl_channel" id="wl_channel" value="" />
+<input type="hidden" name="wl_channelExt" id="wl_channelExt" value="NONE" />
+<input type="hidden" name="sel_encrypt" id="sel_encrypt" value="" />
+<input type="hidden" name="sel_wpa_tkip_aes" id="sel_wpa_tkip_aes" value="" />
+<input type="hidden" name="sel_wpa2_tkip_aes" id="sel_wpa2_tkip_aes" value="" />
+
+<div class="container">
+  <div class="title"> <a href="index.htm"><img src="img/logo.gif" /></a> 
+    <script>
+    dw('<input type="button" id="logoff" class="btn_title_logoff title_btn" value="'+pg_title.logoff+'" onclick="logout()" />');</script> 
+  </div>
+  <script>WriteHr();</script> 
+  <!-- end global title -->
+  <div class="content">
+    <div id="wiz_bg">
+      <div id="id_back">
+        <div id="id_back_img"><a href="index.htm"><img class="img_back" src="img/BackButton.png" /></a></div>
+        <div id="id_back_str">
+          <script language="javascript">_T(pg_wiz.rep);</script>
+        </div>
+      </div>
+      <div id="id_div_all" class="on">
+        <div id="id_wiz_main">
+          <div style="width:565px;height:180px;overflow-x:hidden; overflow-y:auto">
+            <table id="WDSTbl" width="560px" border="0" cellspacing="0" cellpadding="0">
+              <tr align="center" id="id_wiz_main_ss_head">
+                <td width="45%"><script language="javascript">_T(gwl.ssid);</script></td>
+                <td width="10%"><script language="javascript">_T(gwl.chan);</script></td>
+                <td width="25%"><script language="javascript">_T(gwl.sec);</script></td>
+                <td width="10%"><script language="javascript">_T(gwl.signal);</script></td>
+                <td width="10%"><script language="javascript">_T(gwl.sel);</script></td>
+              </tr>
+            </table>
+          </div>
+          <div id="id_wiz_main_ss_list"> <span id="loading" style="position:absolute; left:235px; top:80px; z-index:1; text-align:center;"><img src="img/loader.gif"><br />
+            <font color="#000000">
+            <script language="javascript">_T(pg_wiz.scan);</script>
+            </font></span>
+            <!-- ApList Window -->
+            <!-- ApList Window -->
+          </div>
+          <span id="id_wiz_repssid" class="off">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td class="head_white"><script language="javascript">_T(pg_wiz.conto);</script></td>
+              <td id="id_td_conto"></td>
+            </tr>
+            <tr>
+              <td class="head_white"><script language="javascript">_T(pg_wiz.repssid);</script></td>
+              <td><input type="text" class="input_text" id="wl_rep_ssid" name="wl_rep_ssid" maxlength="32" value="" /></td>
+            </tr>
+          </table>
+          </span> <span id="id_wiz_key" class="off">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td class="head_white"><script language="javascript">_T(gwl.key);</script></td>
+              <td><span id="Keysp">
+                <input type="password" class="input_text" name="web_pskValue" id="web_pskValue" maxlength="64" onkeyup="CountLeng(this, 'c_p')" value="" />
+                </span> &nbsp;<font id="c_p"></font></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><input type="checkbox" name="wpa_key_unmask" value="0" onClick="unmask(this.checked,'Keysp','web_pskValue','web_pskValue','c_p',64 );" >
+                <script language="javascript">_T(glb.unmask);</script></td>
+            </tr>
+          </table>
+          </span>
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td height="20px"><font id="errorinfo"></font><div class="off" id="loginimg"><span  id="bar_span"> </span></div><!--<img class="off" id="loginimg" src="img/login_load.gif" />--></td>
+            </tr>
+          </table>
+          <div id="id_wiz_foot">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td valign="middle" align="right"><script type="text/javascript">dw('<input class="input_btn_wiz_dis" type="button" value="'+ glb.apply +'" name="apply" id="id_apply" disabled onClick="CheckValue(this.form)">');</script> 
+                  <script type="text/javascript">dw('<input class="input_btn_wiz" type="button" value="'+glb.re+'" onclick="RepRefresh()" />');</script></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="id_div_info" class="off">
+        <p>
+          <script language="javascript">_T(pg_setok.msg4);</script>
+        </p>
+        <font id="id_p_info"></font>
+        <div>
+          <p> <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td valign="bottom" align="middle">
+            <script type="text/javascript">dw('<input class="input_btn_wiz" type="button" value="'+ glb.closew +'" name="wdclose" id="wdclose" onclick="divClose()" />');</script> </td>
+              </tr>
+            </table>
+          </p>
+        </div>
+      </div>
+    </div>
+    <!-- end .content --></div>
+  <!-- end .container --></div>
+</form>
+</body>
+</html>

@@ -1,0 +1,422 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WiFi-Repeater Web Server</title>
+<link rel="stylesheet" href="style/gl.css" type="text/css">
+<link rel="stylesheet" href="style/common.css" type="text/css">
+<script type="text/javascript" src="js/lang_en.js?v=1529017603"></script>
+<meta http-equiv="pragma" content="no-cache">
+ <meta http-equiv="cache-control" content="no-cache">
+ <meta http-equiv="expires" content="0">
+ 
+<script type="text/javascript" src="js/gl.js"></script>
+<script type="text/javascript" src="js/wl.js"></script>
+<script type="text/javascript" src="js/set.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript">
+<%
+CGI_MAP(c_radio_on, CFG_WLN_RadioOn);
+CGI_MAP(WlMode, CFG_SYS_OPMODE);
+CGI_MAP(ssid, CFG_WLN_SSID1);
+CGI_MAP(AutoChannelSelect2, CFG_WLN_AutoChannelSelect);
+CGI_MAP(szChannel,CFG_WLN_Channel);
+CGI_MAP(IEEE8021X2,CFG_WLN_IEEE80211H);
+CGI_MAP(c_bssid_num, CFG_WLN_BssidNum);
+CGI_MAP(AuthMode, CFG_WLN_AuthMode);
+CGI_MAP(EncrypType, CFG_WLN_EncrypType);
+CGI_MAP(WepKeyLength2, CFG_WLN_WepKeyLen);
+CGI_MAP(Key1TypeTemp, CFG_WLN_Key1Type);
+//addCfg('WepDefaultKey2',0x043a0200,'1;1;1;1');
+CGI_MAP(WPAPSK1Temp, CFG_WLN_WPAPSK1);
+CGI_MAP(WscConfMode, CFG_WLN_WscConfMode);
+CGI_MAP(c_ht_extcha, CFG_WLN_HT_EXTCHA);
+CGI_MAP(c_hw_bw, CFG_WLN_HT_BW);
+CGI_MAP(WscAuthType2, CFG_WLN_WscAuthType);
+CGI_MAP(WscEncrypType2, CFG_WLN_WscEncrypType);
+CGI_MAP(WscConfigured2, CFG_WLN_WscConfigured);
+CGI_MAP(WscNewKey2, CFG_WLN_WscNewKey);
+%>
+
+var v_radio_on = "<% CGI_CFG_GET(CFG_WLN_RadioOn); %>"*1;
+var regDomain = "1"*1;
+var channel_index  = "<% CGI_CFG_GET(CFG_WLN_Channel); %>"*1; 
+var ssid_idx = "<% CGI_CFG_GET(CFG_WLN_Channel); %>"*1;
+var authenticationMode = "<% CGI_CFG_GET(CFG_WLN_AuthMode); %>";
+var authenticationModeArray = authenticationMode.split(";");
+var encryp_type_mode = "<% CGI_CFG_GET(CFG_WLN_EncrypType); %>";
+var encryp_type_modeArray = encryp_type_mode.split(";");
+var wln_wpapsk = "<% CGI_CFG_GET(CFG_WLN_WPAPSK1); %>";
+var default_ssid = "<% CGI_CFG_GET(CFG_WLN_SSID1); %>";
+//var wln_wpapskArray = wln_wpapsk.split(";");
+
+//////////////////////////
+
+function CheckValue(f)
+{
+	PromptMsg("errorinfo", glb.nul);
+	if ($('#wl_ssid').val() == "")
+	{
+		PromptMsg("errorinfo", pg_wl_bs.ssidNul);
+		$('#wl_ssid').focus();
+		return false;
+	}
+	
+	// SSID & Channel
+	setCfg('WlMode', '1'); //AP Mode
+	setCfg('ssid', $('#wl_ssid').val());
+	if ($('#wl_channel').val()==0)
+	{
+		setCfg('AutoChannelSelect2', '3');
+		setCfg('szChannel', '0');
+	}
+	else
+	{
+		setCfg('AutoChannelSelect2', '0');
+		setCfg('szChannel', $('#wl_channel').val());
+		if ($('#wl_channel').val()<7)
+		{
+			setCfg('c_ht_extcha', '1');
+		}
+		else
+			setCfg('c_ht_extcha', '0');
+	}
+	// Security
+	var security_idx = get_by_id("wl_Method").selectedIndex;
+	switch (security_idx)
+	{
+		case 1: // WEP
+			if (checkWepKey(get_by_id("wep_key")) == false)
+				return false;
+			setCfg('AuthMode', 'OPEN');
+			setCfg('EncrypType','WEP');
+			setCfg('WepDefaultKey2', "1;1;1;1");
+			setCfg('WscAuthType2', '2');
+			setCfg('WscEncrypType2', '2');
+			setCfg('WscConfigured2', '2');
+		if (get_by_id("wep_key").value.length == 5 || get_by_id("wep_key").value.length == 13)
+			{
+				setCfg('Key1TypeTemp', '1');
+				setCfg('Key1Str1Temp', $('#wep_key').val());
+			}
+			else if (get_by_id("wep_key").length == 5 || get_by_id("wep_key").length == 13)
+			{
+				setCfg('Key1TypeTemp', '0');
+				setCfg('Key1Str1Temp', $('#wep_key').val());
+			}
+			break;
+		case 2: // WPA PSK
+			if (checkWpaPsk(get_by_id("web_pskValue")) == false)
+				return false;
+			setCfg('AuthMode', 'WPAPSK;WPAPSK;WPAPSK;WPAPSK');
+			var input_cb_ch0=$('input[name="ciphersuite"][type="checkbox"]').get(0).checked;
+			var input_cb_ch1=$('input[name="ciphersuite"][type="checkbox"]').get(1).checked;
+			if (input_cb_ch0 == true && input_cb_ch1 != true)
+			{
+				setCfg('EncrypType','TKIP;AES;TKIP;TKIP');
+				setCfg('WscEncrypType2', '4');
+			}
+			else if (input_cb_ch0 != true && input_cb_ch1 == true)
+			{
+				setCfg('EncrypType','AES;AES;AES;AES');
+				setCfg('WscEncrypType2', '8');
+			}
+			else
+			{
+				setCfg('EncrypType','TKIPAES;TKIPAES;TKIPAES;TKIPAES');
+				setCfg('WscEncrypType2', '12');
+			}
+			setCfg('WPAPSK1Temp', $('#web_pskValue').val());
+			setCfg('WscAuthType2', '2');
+			setCfg('WscConfigured2', '2');
+			setCfg('WscNewKey2', $('#web_pskValue').val());
+			setCfg('WepDefaultKey2', "2;2;2;2");
+			break;
+		case 3: // WPA2 PSK
+			if (checkWpaPsk(get_by_id("web_pskValue")) == false)
+				return false;
+			setCfg('AuthMode', 'WPA2PSK;WPA2PSK;WPA2PSK;WPA2PSK');
+			var input_cb_ch0=$('input[name="ciphersuite"][type="checkbox"]').get(0).checked;
+			var input_cb_ch1=$('input[name="ciphersuite"][type="checkbox"]').get(1).checked;
+			if (input_cb_ch0 == true && input_cb_ch1 != true)
+			{
+				setCfg('EncrypType','TKIP;AES;TKIP;TKIP');
+				setCfg('WscEncrypType2', '4');
+			}
+			else if (input_cb_ch0 != true && input_cb_ch1 == true)
+			{
+				setCfg('EncrypType','AES;AES;AES;AES');
+				setCfg('WscEncrypType2', '8');
+			}
+			else
+			{
+				setCfg('EncrypType','TKIPAES;TKIPAES;TKIPAES;TKIPAES');
+				setCfg('WscEncrypType2', '12');
+			}
+			setCfg('WPAPSK1Temp', $('#web_pskValue').val());
+			setCfg('WscAuthType2', '32');
+			setCfg('WscConfigured2', '2');
+			setCfg('WscNewKey2', $('#web_pskValue').val());
+			setCfg('WepDefaultKey2', "2;2;2;2");
+			break;
+		case 4: // WPA WPA2 PSK MIX
+			if (checkWpaPsk(get_by_id("web_pskValue")) == false)
+				return false;
+			setCfg('AuthMode', 'WPAPSKWPA2PSK;WPAPSKWPA2PSK;WPAPSKWPA2PSK;WPAPSKWPA2PSK');
+			var input_cb_ch0=$('input[name="ciphersuite"][type="checkbox"]').get(0).checked;
+			var input_cb_ch1=$('input[name="ciphersuite"][type="checkbox"]').get(1).checked;
+			if (input_cb_ch0 == true && input_cb_ch1 != true)
+			{
+				setCfg('EncrypType','TKIP;AES;TKIP;TKIP');
+				setCfg('WscEncrypType2', '4');
+			}
+			else if (input_cb_ch0 != true && input_cb_ch1 == true)
+			{
+				setCfg('EncrypType','AES;AES;AES;AES');
+				setCfg('WscEncrypType2', '8');
+			}
+			else
+			{
+				setCfg('EncrypType','TKIPAES;TKIPAES;TKIPAES;TKIPAES');
+				setCfg('WscEncrypType2', '12');
+			}
+			setCfg('WPAPSK1Temp', $('#web_pskValue').val());
+			setCfg('WepDefaultKey2', "2;2;2;2");
+			setCfg('WscAuthType2', '34');
+			setCfg('WscConfigured2', '2');
+			setCfg('WscNewKey2', $('#web_pskValue').val());
+			break;
+		default: // OPEN:NONE
+			setCfg('AuthMode', 'OPEN;OPEN;OPEN;OPEN');
+			setCfg('EncrypType','NONE;NONE;NONE;NONE');
+			setCfg('WepDefaultKey2', "1;1;1;1");
+			setCfg('WscAuthType2', '1');
+			setCfg('WscEncrypType2', '1');
+			setCfg('WscConfigured2', '2');
+			break;
+	}
+	setCfg('IEEE8021X2',"0;0;0;0");
+	setCfg('c_bssid_num', '1');
+	setCfg('c_hw_bw', '1');
+	
+	form2Cfg(f);
+	$('#loginimg').show();
+	ajax_form('wl_basic.htm', 'wl_basic.htm', ajax_data(f, "Wl_Basic", 'wl_basic.htm'));
+}
+
+function wlOnOff(f)
+{
+	PromptMsg("errorinfo", glb.nul);
+	if (v_radio_on==1)
+	{
+		setCfg("c_radio_on", "0");
+	}
+	else
+	{
+		setCfg("c_radio_on", "1");
+	}
+	form2Cfg(f);
+	$('#loginimg').show();
+	ajax_form('wl_basic.htm', 'wl_basic.htm', ajax_data(f, "Wl_Basic", 'wl_basic.htm'));
+}
+
+$(document).ready(function() 
+{	
+	//Radio On/Off
+	$("#wl_ssid").val(default_ssid);
+	if (v_radio_on==0)
+	{
+		get_by_id("wl_enable").className = "input_btn_dis";
+		get_by_id("wl_enable").value = glb.disabled+"/"+glb.enable;
+	}
+	else
+	{
+		get_by_id("wl_enable").className = "input_btn_en";
+		get_by_id("wl_enable").value = glb.enabled+"/"+glb.disable;
+	}
+
+	show_div(false, "div_wep");
+	show_div(false, "div_wpa");
+	get_by_id("wl_Method").options.selectedIndex = 0;
+	$('input[name="ciphersuite"][type="checkbox"]').get(0).checked=false;
+	$('input[name="ciphersuite"][type="checkbox"]').get(1).checked=false;
+
+	if ((authenticationModeArray[ssid_idx] == "OPEN" ||authenticationModeArray[ssid_idx] == "SHARED" || authenticationModeArray[ssid_idx] == "WEPAUTO") && encryp_type_modeArray[ssid_idx] == "WEP")
+	{
+		get_by_id("wl_Method").options.selectedIndex = 1;
+		show_div(true, "div_wep");
+	}
+	else if (authenticationModeArray[ssid_idx] == "WPAPSK")
+	{
+		get_by_id("wl_Method").options.selectedIndex = 2;
+	}
+	else if (authenticationModeArray[ssid_idx] == "WPA2PSK")
+	{
+		get_by_id("wl_Method").options.selectedIndex = 3;
+	}
+	else if (authenticationModeArray[ssid_idx] == "WPAPSKWPA2PSK")
+	{
+		get_by_id("wl_Method").options.selectedIndex = 4;
+	}
+
+	if ((authenticationModeArray[ssid_idx] == "WPAPSK") || (authenticationModeArray[ssid_idx] == "WPA2PSK")||(authenticationModeArray[ssid_idx] == "WPAPSKWPA2PSK") )
+	{
+		show_div(true, "div_wpa");
+		if (encryp_type_modeArray[ssid_idx] == "TKIP")
+		{
+			$('input[name="ciphersuite"][type="checkbox"]').get(0).checked=true;
+		}
+		else if (encryp_type_modeArray[ssid_idx] == "AES")
+		{
+			$('input[name="ciphersuite"][type="checkbox"]').get(1).checked=true;
+		}
+		else
+		{
+			$('input[name="ciphersuite"][type="checkbox"]').get(0).checked=true;
+			$('input[name="ciphersuite"][type="checkbox"]').get(1).checked=true;
+		}
+		$("#web_pskValue").val(wln_wpapsk);
+	}
+} ) 
+</script>
+</head>
+
+<body>
+<FORM name=WL_BASIC>
+<div class="container">
+  <div class="title"> <a href="index.htm"><img src="img/logo.gif" /></a> 
+    <script>
+    dw('<input type="button" id="logoff" class="btn_title_logoff title_btn" value="'+pg_title.logoff+'" onclick="logout()" />');</script> 
+  </div>
+  <script>WriteHr();</script> 
+  <!-- end global title -->
+  <div class="content">
+    <table width="900px" border="0" cellspacing="0" cellpadding="0">
+      <tr>
+        <td class="blank_1"></td>
+        <td class="blank_2"><!--Menu-->
+          
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td class="menu_head"><script language="javascript">_T(gwl.ws);</script></td>
+            </tr>
+            <tr>
+              <td><script type="text/javascript">WriteMenu(wl_menu, 0);</script></td>
+            </tr>
+          </table>
+          
+          <!--Menu--></td>
+        <td class="blank_3">&nbsp;</td>
+        <td class="blank_4"><!--Main Table-->
+          
+          <div id="id_div_all" class="on">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td class="menu_head"><script type="text/javascript">dw(wl_menu[0].name);</script></td>
+              </tr>
+              <tr>
+                <td><table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td class="head"><script language="javascript">_T(pg_wl_bs.en);</script></td>
+                      <td><input type="button" class="input_btn_en" id="wl_enable" name="wl_enable" value="Enable" onclick="wlOnOff(this.form)"  /></td>
+                    </tr>
+                    <tr>
+                      <td class="head"><script language="javascript">_T(gwl.ssid);</script></td>
+                      <td><input type="text" class="input_text" id="wl_ssid" name="wl_ssid" maxlength="32" value="" /></td>
+                    </tr>
+                    <tr>
+						<td class="head"><script language="javascript">_T(gwl.chan);</script></td>
+						<td>
+							<select class="option" id="wl_channel" name="wl_channel">
+								<script>
+									writeChan(regDomain, channel_index);
+								</script>
+							</select>
+						</td>
+                    </tr>
+                  </table>
+                 <!-- <hr /> -->
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td class="head"><script language="javascript">_T(gwl.encryption);</script></td>
+                      <td><select class="option" id="wl_Method" name="wl_Method" onchange="selSec(true)">
+                          <option  value="0">
+                          <script language="javascript">_T(glb.disable);</script>
+                          </option>
+                          <option value="1">WEP</option>
+                          <option value="2">WPA&nbsp;
+                          <script language="javascript">_T(gwl.psk);</script>
+                          </option>
+                          <option value="3">WPA2&nbsp;
+                          <script language="javascript">_T(gwl.psk);</script>
+                          </option>
+                          <option value="6">WPA/WPA2&nbsp;
+                          <script language="javascript">_T(gwl.psk);</script>
+                          </option>
+                        </select></td>
+                    </tr>
+                  </table>
+                  <span id="div_wep" class="off">
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td class="head"><script language="javascript">_T(gwl.key);</script></td>
+                      <td><input type="password" class="input_text" id="wep_key" name="wep_key" maxlength="26" value="" /></td>
+                    </tr>
+                  </table>
+                  </span> <span id="div_wpa" class="off">
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td class="head">WPA&nbsp;
+                        <script language="javascript">_T(gwl.cipher);</script></td>
+                      <td width="60%"><input type="checkbox" name="ciphersuite" value="tkip" />
+                        TKIP&nbsp;
+                        <input type="checkbox" name="ciphersuite" value="aes" />
+                        AES</td>
+                    </tr>
+                  </table>
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td class="head"><script language="javascript">_T(gwl.key);</script></td>
+                      <td><input type="password" class="input_text" name="web_pskValue" id="web_pskValue" maxlength="64" value="" /></td>
+                    </tr>
+                  </table>
+                  </span>
+                  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td class="head_white"></td>
+                      <td><font id="errorinfo"></font><img class="off" id="loginimg" src="img/login_load.gif" /></td>
+                    </tr>
+                  </table></td>
+              </tr>
+              <tr>
+                <td class="footer"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td><script type="text/javascript">dw('<input id="id_apply" class="submit_btn" type="button" value="'+glb.apply+'" onclick="CheckValue(this.form)"  />');</script></td>
+                    </tr>
+                  </table></td>
+              </tr>
+            </table>
+          </div>
+          <div id="id_div_info" class="off">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td class="menu_head"><script language="javascript">_T(pg_setok.msg4);</script></td>
+              </tr>
+            </table>
+            <font id="id_p_info"></font>
+            <div>
+              <p> 
+                <script type="text/javascript">dw('<input class="submit_btn" type="button" value="'+ glb.closew +'" name="wdclose" id="wdclose" />');</script> 
+              </p>
+            </div>
+          </div>
+          
+          <!--Main Table--></td>
+      </tr>
+    </table>
+    <!-- end .content --></div>
+  <!-- end .container --></div>
+  </FORM>
+</body>
+</html>
+

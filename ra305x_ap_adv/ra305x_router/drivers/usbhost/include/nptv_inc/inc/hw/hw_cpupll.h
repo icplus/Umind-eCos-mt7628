@@ -1,0 +1,44 @@
+#ifndef _HW_CPUPLL_H_
+#define _HW_CPUPLL_H_
+
+//Page HISTORY
+#define IO_CPUPLL_BASE (IO_VIRT + 0x62000)
+
+//Page TABLE
+#define REG_CPUPLL_AA_CFG0 (IO_CPUPLL_BASE + 0x500)
+    #define FLD_RG_CPUPLL_PWD Fld(1,31,AC_MSKB3)//[31:31]
+    #define FLD_RG_CPUPLL_FBDIV Fld(7,24,AC_MSKB3)//[30:24]
+    #define FLD_RG_CPUPLL_PREDIV Fld(2,22,AC_MSKB2)//[23:22]
+    #define FLD_RG_CPUPLL_POSDIV Fld(2,20,AC_MSKB2)//[21:20]
+    #define FLD_RG_CPUPLL_CKCTRL Fld(2,18,AC_MSKB2)//[19:18]
+    #define FLD_RG_CPUPLL_FBSEL Fld(2,16,AC_MSKB2)//[17:16]
+    #define FLD_RG_CPUPLL_DIVEN Fld(3,13,AC_MSKB1)//[15:13]
+    #define FLD_RG_CPUPLL_BP Fld(1,12,AC_MSKB1)//[12:12]
+    #define FLD_RG_CPUPLL_BR Fld(1,11,AC_MSKB1)//[11:11]
+    #define FLD_RG_CPUPLL_HF Fld(1,10,AC_MSKB1)//[10:10]
+    #define FLD_RG_CPUPLL_LF Fld(1,9,AC_MSKB1)//[9:9]
+    #define FLD_RG_CPUPLL_FPEN Fld(1,8,AC_MSKB1)//[8:8]
+    #define FLD_RG_CPUPLL_MONEN Fld(1,7,AC_MSKB0)//[7:7]
+    #define FLD_RG_CPUPLL_ACCEN Fld(1,6,AC_MSKB0)//[6:6]
+    #define FLD_RG_CPUPLL_BIAS_RST Fld(1,5,AC_MSKB0)//[5:5]
+    #define FLD_RG_CPUPLL_BIAS_PWD Fld(1,4,AC_MSKB0)//[4:4]
+    #define FLD_RG_CPUPLL_BRCKRX_PD Fld(1,3,AC_MSKB0)//[3:3]
+    #define FLD_RG_CPUPLL_BRCKMON_PD Fld(1,2,AC_MSKB0)//[2:2]
+    #define FLD_RG_CPUPLL_VODEN Fld(1,1,AC_MSKB0)//[1:1]
+    #define FLD_RG_CPUPLL_SEL_CK Fld(1,0,AC_MSKB0)//[0:0]
+#define REG_CPUPLL_AA_CFG1 (IO_CPUPLL_BASE + 0x504)
+    #define FLD_RG_CPUPLL_MONSEL Fld(4,28,AC_MSKB3)//[31:28]
+    #define FLD_RG_CPUPLL_BRCKMON_AMPADJ Fld(3,25,AC_MSKB3)//[27:25]
+    #define FLD_RG_CPUPLL_MONCKEN Fld(1,24,AC_MSKB3)//[24:24]
+    #define FLD_RG_CPUPLL_FMEN Fld(1,23,AC_MSKB2)//[23:23]
+    #define FLD_RG_CPUPLL_REFCK_SEL Fld(2,21,AC_MSKB2)//[22:21]
+    #define FLD_RG_CPUPLL_M4PDIV Fld(2,19,AC_MSKB2)//[20:19]
+    #define FLD_RG_CPUPLL_V11EN Fld(1,18,AC_MSKB2)//[18:18]
+    #define FLD_RG_CPUPLL_REFCK_EN Fld(1,17,AC_MSKB2)//[17:17]
+    #define FLD_RG_CPUPLL_DET_EN Fld(1,16,AC_MSKB2)//[16:16]
+    #define FLD_RG_CPUPLL_TSTCK_EN Fld(1,15,AC_MSKB1)//[15:15]
+    #define FLD_RG_CPUPLL_RESERVE Fld(5,10,AC_MSKB1)//[14:10]
+    #define FLD_RG_CPUPLL_MON Fld(2,8,AC_MSKB1)//[9:8]
+    #define FLD_RG_CPUPLL_D2S Fld(8,0,AC_FULLB0)//[7:0]
+
+#endif /* _HW_CPUPLL_H_ */

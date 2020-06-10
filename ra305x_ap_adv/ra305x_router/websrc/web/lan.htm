@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>WiFi-Repeater Web Server</title>
+<link rel="stylesheet" href="style/gl.css" type="text/css">
+<link rel="stylesheet" href="style/common.css" type="text/css">
+<script type="text/javascript" src="js/lang_en.js?v=1529017603"></script>
+<meta http-equiv="pragma" content="no-cache">
+ <meta http-equiv="cache-control" content="no-cache">
+ <meta http-equiv="expires" content="0">
+ 
+<script type="text/javascript" src="js/gl.js"></script>
+<script type="text/javascript" src="js/lan.js"></script>
+<script type="text/javascript" src="js/set.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript">
+
+addCfg('LANIP',0x02080300,'192.168.10.1');
+addCfg('DHS',0x02050300,'192.168.10.100');
+addCfg('DHE',0x02030300,'192.168.10.200');
+addCfg('dhcpsvr',0x02020100,'1');
+
+
+function CheckValue(f)
+{
+	PromptMsg("errorinfo", glb.nul);
+	if ( checkIpAddr(get_by_id("lan_ip")) == false )
+	{
+		get_by_id("lan_ip").value = get_by_id("lan_ip").defaultValue;
+		get_by_id("lan_ip").focus();
+	    return false;
+	}
+	var ipstr = get_by_id("lan_ip").value.split(".");
+	
+	setCfg('LANIP', $('#lan_ip').val());
+	setCfg('DHS', ipstr[0] + "." + ipstr[1] + "." +ipstr[2]+"." + "100");
+	setCfg('DHE', ipstr[0] + "." + ipstr[1] + "." +ipstr[2]+"." + "200");
+	setCfg('dhcpsvr', $('#dhcp').val());
+	
+	form2Cfg(f);
+	$('#loginimg').show();
+	ajax_form('lan.htm', SetokPage, ajax_data(f, "LAN", SetokPage));
+}
+
+function WRDhcp()
+{
+	if ('1'*1 == 1)
+	{
+		dw('<option value="1" selected>'+ pg_lan.svr +'</option>');
+		dw('<option value="0" >'+ glb.disable +'</option>');
+	}
+	else 
+	{
+		dw('<option value="1" >'+ pg_lan.svr +'</option>');
+		dw('<option value="0" selected>'+ glb.disable +'</option>');
+	}
+}
+
+$(document).ready(function() 
+{
+	// fix background heigh
+	InitBgHeigh("lan_bg");	
+} 
+) 
+</script>
+</head>
+
+<body>
+<FORM name=LAN>
+  <div class="container">
+    <div class="title"> <a href="index.htm"><img src="img/logo.gif" /></a> 
+      <script>
+    dw('<input type="button" id="logoff" class="btn_title_logoff title_btn" value="'+pg_title.logoff+'" onclick="logout()" />');</script> 
+    </div>
+    <script>WriteHr();</script> 
+    <!-- end global title -->
+    <div class="content">
+      <div id="lan_bg">
+        <div id="id_back">
+          <div id="id_back_img"> <a href="index.htm"> <img class="img_back" src="img/BackButton.png" /></a></div>
+          <div id="id_back_str">
+            <script language="javascript">_T(pg_lan.title);</script>
+          </div>
+        </div>
+        <div id="id_lan_main">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td class="head_white"><script language="javascript">_T(gnet.ipaddr);</script></td>
+              <td><input type="text" class="input_lan_text" id="lan_ip" name="lan_ip" maxlength="15" value="192.168.10.1" /></td>
+            </tr>
+            <tr>
+              <td class="head_white"><script language="javascript">_T(gnet.dhcp);</script></td>
+              <td><select class="input_lan_text" name="dhcp" id="dhcp">
+                  <script>
+				WRDhcp();
+				</script>
+                </select></td>
+            </tr>
+            <tr>
+              <td class="head_white"></td>
+              <td><font id="errorinfo"></font><img class="off" id="loginimg" src="img/login_load.gif" /></td>
+            </tr>
+          </table>
+          <div id="id_lan_foot">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td align="right"><script type="text/javascript">dw('<input class="input_btn_lan" type="button" value="'+ glb.apply +'" name="login" onClick="CheckValue(this.form)">');</script> 
+                  <script type="text/javascript">dw('<input class="input_btn_lan" type="button" value="'+ glb.cancel +'"  onClick="GotoWeb(\'index.htm\')">');</script></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- end .content --></div>
+    <!-- end .container --></div>
+</FORM>
+</body>
+</html>
+

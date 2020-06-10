@@ -1,0 +1,231 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<META HTTP-EQUIV="refresh" content="5; URL=./wl_wps.htm">
+<title>WiFi-Repeater Web Server</title>
+<link rel="stylesheet" href="style/gl.css" type="text/css">
+<link rel="stylesheet" href="style/common.css" type="text/css">
+<script type="text/javascript" src="js/lang_en.js?v=1529017603"></script>
+<meta http-equiv="pragma" content="no-cache">
+ <meta http-equiv="cache-control" content="no-cache">
+ <meta http-equiv="expires" content="0">
+ 
+<script type="text/javascript" src="js/gl.js"></script>
+<script type="text/javascript" src="js/wl.js"></script>
+<script type="text/javascript" src="js/set.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+
+<script type="text/javascript">
+<%
+CGI_MAP(c_radio_on, CFG_WLN_RadioOn);
+CGI_MAP(WlMode, CFG_SYS_OPMODE);
+CGI_MAP(c_WLN_WscConfMode, CFG_WLN_WscConfMode);
+CGI_MAP(c_WLN_WscModeOption, CFG_WLN_WscModeOption);
+%>
+
+var v_WlMode = "<% CGI_CFG_GET(CFG_SYS_OPMODE); %>"*1;
+var v_radio_on = "<% CGI_CFG_GET(CFG_WLN_RadioOn); %>"*1;
+var v_WLN_WscConfMode = "<% CGI_CFG_GET(CFG_WLN_WscConfMode); %>"*1;
+var v_WLN_WscModeOption = "<% CGI_CFG_GET(CFG_WLN_WscModeOption); %>"*1;
+var a_wscStatus = new Array(35);
+a_wscStatus[0] = "Not Used";
+a_wscStatus[1] = gwl.status1;
+a_wscStatus[2] = pg_wl_wps.fail;
+a_wscStatus[3] = pg_wl_wps.star;
+a_wscStatus[4] = "Received EAPOL-Start";
+a_wscStatus[5] = "Sending EAP-Req(ID)";
+a_wscStatus[6] = "Receive EAP-Rsp(ID)";
+a_wscStatus[7] = "Receive EAP-Req with wrong WSC SMI Vendor Id";
+a_wscStatus[8] = "Receive EAPReq with wrong WSC Vendor Type";
+a_wscStatus[9] = "Sending EAP-Req(WSC_START)";
+a_wscStatus[10] = "Send M1";
+a_wscStatus[11] = "Received M1";
+a_wscStatus[12] = "Send M2";
+a_wscStatus[13] = "Received M2";
+a_wscStatus[14] = "Received M2D";
+a_wscStatus[15] = "Send M3";
+a_wscStatus[16] = "Received M3";
+a_wscStatus[17] = "Send M4";
+a_wscStatus[18] = "Received M4";
+a_wscStatus[19] = "Send M5";
+a_wscStatus[20] = "Received M5";
+a_wscStatus[21] = "Send M6";
+a_wscStatus[22] = "Received M6";
+a_wscStatus[23] = "Send M7";
+a_wscStatus[24] = "Received M7";
+a_wscStatus[25] = "Send M8";
+a_wscStatus[26] = "Received M8";
+a_wscStatus[27] = "Processing EAP Response (ACK)";
+a_wscStatus[28] = "Processing EAP Request (Done)";
+a_wscStatus[29] = "Processing EAP Response (Done)";
+a_wscStatus[30] = "Sending EAP-Fail";
+a_wscStatus[31] = "WSC_ERROR_HASH_FAIL";
+a_wscStatus[32] = "WSC_ERROR_HMAC_FAIL";
+a_wscStatus[33] = "WSC_ERROR_DEV_PWD_AUTH_FAIL";
+a_wscStatus[34] = pg_wl_wps.suc;
+a_wscStatus[35] = "Scanning AP";
+a_wscStatus[36] = "EAPOL Start Send";
+a_wscStatus[37] = "STATUS_WSC_EAP_RSP_DONE_SENT";
+a_wscStatus[38] = "STATUS_WSC_WAIT_PIN_CODE";
+a_wscStatus[39] = "STATUS_WSC_START_ASSOC";
+a_wscStatus[40] = "STATUS_WSC_IBSS_WAIT_NEXT_SMPBC_ENROLLEE";
+a_wscStatus[41] = "STATUS_WSC_IBSS_NEW_RANDOM_PIN";
+a_wscStatus[42] = "STATUS_WSC_IBSS_FIXED_PIN";
+
+function wlwps_onoff_select(f)
+{
+	if (v_WLN_WscConfMode==0) // disable-->enable
+	{
+		setCfg("c_WLN_WscConfMode", "7");
+		setCfg("c_WLN_WscModeOption", "2");
+	}
+	else
+	{
+		setCfg("c_WLN_WscConfMode", "0");
+		setCfg("c_WLN_WscModeOption", "2");
+	}
+	form2Cfg(f);
+	$('#loginimg').show();
+	ajax_form('wl_wps.htm', 'wl_wps.htm', ajax_data(f, "WL_WPS", 'wl_wps.htm'));
+}
+function sub(f, type)
+{
+	form2Cfg(f);
+	$('#loginimg').show();
+	ajax_form('wl_wps.htm', 'wl_wps.htm', ajax_data(f, "WIRELESS_SIMPLE_CONFIG_DEVICE", 'wl_wps.htm')+"&WscType="+type);
+}
+
+$(document).ready(function() 
+{
+	get_by_id("start").className = "nomal_btn_dis";
+	get_by_id("start1").className = "nomal_btn_dis";
+	get_by_id("start").disabled = true;
+	get_by_id("start1").disabled = true;
+	if (v_WlMode == 1)
+		$('#id_tr_wsc_rep').show();
+	if (v_WLN_WscConfMode == 7)
+	{
+		get_by_id("id_wl_enable").className = "input_btn_en";
+		get_by_id("id_wl_enable").value = glb.enabled+"/"+glb.disable;
+		get_by_id("start").className = "nomal_btn_en";
+		get_by_id("start").disabled = false;
+		if (v_WlMode == 1)
+		{
+			get_by_id("start1").className = "nomal_btn_en";
+			get_by_id("start1").disabled = false;
+		}
+	}
+	else
+	{
+		get_by_id("id_wl_enable").className = "input_btn_dis";
+		get_by_id("id_wl_enable").value = glb.disabled+"/"+glb.enable;
+	}
+
+	var current_status = "1"*1;
+	
+	get_by_id("wps_status").innerHTML= a_wscStatus[current_status];
+
+});
+</script>
+</head>
+
+<body>
+<div class="container">
+  <div class="title"> <a href="index.htm"><img src="img/logo.gif" /></a> 
+    <script>
+    dw('<input type="button" id="logoff" class="btn_title_logoff title_btn" value="'+pg_title.logoff+'" onclick="logout()" />');</script> 
+  </div>
+  <script>WriteHr();</script> 
+  <!-- end global title -->
+  <div class="content"> 
+    <table width="900px" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+      <td class="blank_1"></td>
+      <td class="blank_2"><!--Menu-->
+        
+        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td class="menu_head"><script language="javascript">_T(gwl.ws);</script></td>
+          </tr>
+          <tr>
+            <td><script type="text/javascript">WriteMenu(wl_menu, 2);</script></td>
+          </tr>
+        </table>
+        
+        <!--Menu--></td>
+      <td class="blank_3">&nbsp;</td>
+      <td class="blank_4"><!--Main Table-->
+        
+        <div id="id_div_all" class="on">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td class="menu_head"><script type="text/javascript">dw(wl_menu[2].name);</script></td>
+            </tr>
+            <tr>
+              <td><table width="100%" border="0" cellspacing="0" cellpadding="0">
+				<FORM name=WL_WPS>
+                  <tr>
+                    <td class="head"><script language="javascript">_T(pg_wl_wps.en);</script></td>
+                    <td><input type="button" id="id_wl_enable" name="id_wl_enable" class="input_btn_dis" value="Disabled" onclick="wlwps_onoff_select(this.form)"  /></td>
+                  </tr>
+                    </FORM>
+                  <tr>
+                    <td class="head"><script language="javascript">_T(pg_wl_wps.pin);</script></td>
+                    <td>49012842</td>
+                  </tr>
+                  <form method=get name=WIRELESS_SIMPLE_CONFIG_DEVICE>
+                  <tr><td class="head"><script language="javascript">_T(pg_home.ap);</script></td>
+                   <td>
+                    <script>
+                    dw('<input type="button" id="start" class="nomal_btn_en" value="'+pg_wl_wps.startP+'" onclick="sub(this.form, 0)"  />');
+					//dw('&nbsp;&nbsp;&nbsp;');
+                    //dw('<input type="button" id="stop" class="nomal_btn_en" value="'+pg_wl_wps.stopP+'" onclick="sub(this.form, \'stopPBC\')"  />');
+                    </script>
+                   </td>
+                  </tr>
+                  <tr id="id_tr_wsc_rep" class="off"><td class="head"><script language="javascript">_T(pg_home.rep);</script></td>
+                   <td>
+                    <script>
+                    dw('<input type="button" id="start1" class="nomal_btn_en" value="'+pg_wl_wps.startP+'" onclick="sub(this.form, 1)"  />');
+					</script>
+                   </td>
+                  </tr>
+                  </form>
+                  <tr><td class="head"><script language="javascript">_T(glb.status);</script></td>
+                   <td id="wps_status"><script language="javascript">_T(gwl.status1);</script></td>
+                  </tr>
+                  <tr>
+                    <td class="head_white"></td>
+                    <td><img class="off" id="loginimg" src="img/login_load.gif" /></td>
+                  </tr>
+                </table></td>
+            </tr>
+            <tr>
+              <td class="footer"></td>
+            </tr>
+          </table>
+        </div>
+        <div id="id_div_info" class="off">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td class="menu_head"><script language="javascript">_T(pg_setok.msg4);</script></td>
+            </tr>
+          </table>
+          <font id="id_p_info"></font>
+          <div>
+            <p> 
+              <script type="text/javascript">dw('<input class="submit_btn" type="button" value="'+ glb.closew +'" name="wdclose" id="wdclose" />');</script> 
+            </p>
+          </div>
+        </div>
+        
+        <!--Main Table--></td>
+    </tr>
+  </table>
+    <!-- end .content --></div>
+  <!-- end .container --></div>
+
+</body>
+</html>
+
