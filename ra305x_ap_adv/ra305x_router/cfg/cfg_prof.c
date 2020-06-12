@@ -2291,7 +2291,7 @@ void CFG_reset_default()
 {
 	diag_printf("Reset the default configuration to flash!\n"); 
 	CFG_init_prof();
-
+#if 0
 	//mjh reset ssid
 	char mjh_mac[6];
 	CFG_get_mac(2, mjh_mac);
@@ -2300,7 +2300,7 @@ void CFG_reset_default()
 	printf("ssid = %s\n",mjh_mac_ssid);
 	//CFG_set(CFG_WLN_SSID, mjh_mac_ssid);
 	CFG_set_str(CFG_WLN_SSID1, mjh_mac_ssid);
-
+#endif
 #if defined(RT6352) || defined(MT7620)||defined(CONFIG_MT7628_ASIC)
 	CFG_set_str(CFG_WLN_HT_TxStream, "2");
 	CFG_set_str(CFG_WLN_HT_RxStream, "2");
