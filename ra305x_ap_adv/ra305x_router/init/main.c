@@ -203,11 +203,10 @@ int main(void)
 	Watchdog_start();
 #endif // CONFIG_WATCHDOG_SUPPORT
 	
-	//add by mjh
-	mjh_start(1);
+	//add by mjh -- this functuon is about led signal
+	//mjh_start(1);
 
 	printf("************************\n");
-	//printf("************************\n");
 		
 	mjh_wsc(1);
 	//hello();  //mjh
